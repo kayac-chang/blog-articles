@@ -128,19 +128,19 @@ console.log((<Form />).type); // Form function
 更詳細的描述可以看[這裡](https://reactjs.org/blog/2015/12/18/react-components-elements-and-instances.html)。  
 簡單來說，他看起來像這樣：
 
-你：`ReactDOM.render(<App />, domContainer)`
+你：`ReactDOM.render(<App />, domContainer)`  
 React：嗨 App，你想渲染啥？
 
-App：我渲染 `<Layout>` 裡面有 `<Content>`。
+App：我渲染 `<Layout>` 裡面有 `<Content>`。  
 React：嗨 `<Layout>`，你想渲染啥？
 
-Layout：我要在 `<div>` 裡面渲染我的子元素。我的子元素是 `<Content>` 所以我猜他應該要在 `<div>` 裏。
+Layout：我要在 `<div>` 裡面渲染我的子元素。我的子元素是 `<Content>` 所以我猜他應該要在 `<div>` 裏。  
 React：嗨 `<Content>`，你想渲染啥？
 
-Content：我要渲染 `<article>` 跟一些文字，還有 `<Footer>` 在裡面。
+Content：我要渲染 `<article>` 跟一些文字，還有 `<Footer>` 在裡面。  
 React：嗨 `<Footer>`，你要渲染啥？
 
-Footer：我要渲染 `<footer>` 跟一些文字。
+Footer：我要渲染 `<footer>` 跟一些文字。  
 React：好喔，給你：
 
 ```js
@@ -153,22 +153,22 @@ React：好喔，給你：
 </div>
 ```
 
-這就是為什麼我們說 reconciliation 是遞迴。
-當 React 走過整個 element tree，他可能會遇到 element 他的 type 是元件。
-他就會執行它，並沿著返回的 React element 繼續往下走。
+這就是為什麼我們說 reconciliation 是遞迴。  
+當 React 走過整個 element tree，他可能會遇到 element 他的 type 是元件。  
+他就會執行它，並沿著返回的 React element 繼續往下走。  
 最終我們會執行完全部的元件，然後 React 就會知道如何更動宿主樹。
 
-同樣的 reconciliation 規則我們之前已經討論過了。
-如果 type 在同樣的位置被改變 (由 index 或是 key 決定)。
+同樣的 reconciliation 規則我們之前已經討論過了。  
+如果 type 在同樣的位置被改變 (由 index 或是 key 決定)。  
 React 會把裏面的宿主實例捨棄，並重新建造他。
 
 ## Inversion of Control
 
-你可能會開始思考：
-為什麼我們不直接呼叫元件就好了？
+你可能會開始思考：  
+為什麼我們不直接呼叫元件就好了？  
 為什麼要寫 `<Form />` 而不是 `Form()`?
 
-因為，如果讓 React 知道你的元件的話，它可以把事情做得更好。
+因為，如果讓 React 知道你的元件的話，它可以把事情做得更好。  
 比起在你遞迴的呼叫他們直接生成 React element 樹。
 
 ```js
@@ -199,7 +199,7 @@ ReactDOM.render(
 - **元件的 type 也會參與到 reconciliation 裏。**  
   讓 React 呼叫你的元件，你也順便讓他更加了解你的樹狀結構。  
   例如，當你從 `<Feed>`頁移動到 `<Profile>` 頁面，  
-  React 不會試圖重用裏面的宿主實例 — 就像先前你將 <button> 替換成 <p>。  
+  React 不會試圖重用裏面的宿主實例 — 就像先前你將 `<button>` 替換成 `<p>`。  
   所有的 state 應該要消失 — 在你想要渲染不同畫面的時候，通常是件好事。  
   你不會想要在 `<PasswordForm>` 跟 `<MessengerChat>` 切換時保留 input 的狀態，  
   即便可能在兩個樹狀結構中，`<input>` 的位置意外的撞到了。
@@ -307,5 +307,5 @@ function Page({ user, children }) {
 如果我們的 `Page` 元件忽略了他的 `children props`，而是渲染 `<h1>Please log in</h1>`，  
 React 不會去呼叫那個 `Comments` 函式。
 
-這很好，因為它省去了沒必要的渲染工作，並且讓程式碼變得不那麼脆落。
+這很好，因為它省去了沒必要的渲染工作，並且讓程式碼變得不那麼脆弱。  
 (我們就不用去在意 `Comments` 是否被捨棄，當用戶已經登出之後 — 因為他沒被執行。)
