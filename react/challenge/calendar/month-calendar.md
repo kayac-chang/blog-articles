@@ -2,7 +2,7 @@
 
 hashtags: `#react`, `#calendar`
 
-## 關於 calendar
+## About
 
 [calendar] 是一種劃分時間的系統。  
 透過定義時間段為一個單位下去規劃，  
@@ -606,13 +606,6 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
   );
 };
 ```
-
-## 只有日期格子！？
-
-是的。  
-在這個元件，我們只處理日期格子的渲染。
-
-在下個章節我們會製作日期元件的標頭跟控制項。
 
 ## 名詞對照
 

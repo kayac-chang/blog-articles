@@ -8,7 +8,7 @@
 
 ## Turbo
 
-1. 建立 [Turbo][turborepo] 建立 Monorepo
+建立 [Turbo][turborepo] 建立 Monorepo
 
 > ### Turborepo
 >
@@ -56,13 +56,13 @@ We suggest that you begin by typing:
 
 ```
 
-2. 進入專案
+進入專案
 
 ```
 cd my-comp
 ```
 
-3. 清理一下當前專案
+清理一下當前專案
 
 ```diff
     .
@@ -104,7 +104,7 @@ cd my-comp
     └── yarn.lock
 ```
 
-4. 檢查一下能不能正常運行
+檢查一下能不能正常運行
 
 ```bash
 yarn dev
@@ -114,7 +114,7 @@ yarn dev
 
 ## 更改專案 packages
 
-1. 更改一下 packages
+更改一下 packages
 
 ```diff
     .
@@ -148,7 +148,7 @@ yarn dev
     └── yarn.lock
 ```
 
-2. 更改引入部分
+更改引入部分
 
 -- `web/package.json`
 
@@ -182,23 +182,19 @@ yarn dev
     }
 ```
 
-3. 更改成動態編譯元件
+更改成動態編譯元件
 
 -- `web/next.config.js`
 
 ```js
-const packages = Object.entries(require("./package.json").dependencies)
-  .filter(([, value]) => value === "*")
-  .map(([key]) => key);
-
-const withTM = require("next-transpile-modules")(packages);
+const withTM = require("next-transpile-modules")(["button"]);
 
 module.exports = withTM({
   reactStrictMode: true,
 });
 ```
 
-4. 更改實際測試程式
+更改實際測試程式
 
 -- `web/pages/index.tsx`
 
@@ -318,11 +314,14 @@ export default function Web() {
 +     "test": "vitest"
     },
     "devDependencies": {
++     "@testing-library/cypress": "latest",
++     "@testing-library/dom": "latest",
++     "@testing-library/react": "latest",
++     "@testing-library/user-event": "latest",
 +     "@types/ramda": "latest",
 +     "@types/react": "latest",
 +     "@types/react-dom": "latest",
-+     "@testing-library/react": "latest",
-+     "@testing-library/user-event": "latest",
++     "@types/testing-library__cypress": "latest",
       "eslint-config-custom": "*",
 +     "jsdom": "latest",
       "prettier": "latest",
@@ -384,185 +383,24 @@ expect.extend(domMatchers);
 afterEach(cleanup);
 ```
 
-## Cypress
-
-不想每次都手動去做測試跟開發，  
-所以我想用 [Cypress][cypress] 下去自動化測試，  
-這樣開發時可以順便測一遍前面實作的東西有沒有被改壞，  
-可以省下很多通靈時間。
-
-1. 建立 `e2e` 資料夾
-
-```bash
-mkdir e2e && cd $_
-```
-
-2. 建立 `e2e/package.json`
-
--- `e2e/package.json`
-
-```json
-{
-  "name": "e2e",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "cypress open"
-  },
-  "devDependencies": {
-    "@types/node": "^17.0.12",
-    "cypress": "^10.7.0",
-    "eslint": "7.32.0",
-    "eslint-config-custom": "*",
-    "tsconfig": "*",
-    "typescript": "^4.5.3"
-  }
-}
-```
-
-3. 建立 `e2e/tsconfig.json`
-
--- `e2e/tsconfig.json`
-
-```json
-{
-  "extends": "tsconfig/base.json",
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
-}
-```
-
-4. 回到根目錄，更改根目錄的 `package.json`
-
-```bash
-cd ..
-```
-
--- `package.json`
-
-```diff
-  {
-    "name": "my-comp",
-    "version": "0.0.0",
-    "private": true,
-    "workspaces": [
-+     "e2e",
-      "apps/*",
-      "packages/*"
-    ],
-    "scripts": {
-      "build": "turbo run build",
-      "dev": "turbo run dev --parallel",
-      "lint": "turbo run lint",
-      "format": "prettier --write \"**/*.{ts,tsx,md}\""
-    },
-    "devDependencies": {
-      "eslint-config-custom": "*",
-      "prettier": "latest",
-      "turbo": "latest"
-    },
-    "engines": {
-      "npm": ">=7.0.0",
-      "node": ">=14.0.0"
-    },
-    "dependencies": {},
-    "packageManager": "yarn@1.22.11"
-  }
-```
-
-5. 開啟 cypress dashboard
-
-```bash
-yarn dev
-```
-
-6. 跟著 cypress dashboard 建立測試
-
-這邊的測試用 `calendar` 為例。
-
-[跟著文件操作一遍](https://docs.cypress.io/guides/end-to-end-testing/writing-your-first-end-to-end-test)
-
-最後會幫你產生如下：
-
-```diff
-  .
-  ├── README.md
-  ├── apps
-  │   └── web
-  │       ├── README.md
-  │       ├── next-env.d.ts
-  │       ├── next.config.js
-  │       ├── package.json
-  │       ├── pages
-  │       │   ├── _app.tsx
-  │       │   └── index.tsx
-  │       ├── postcss.config.js
-  │       ├── styles
-  │       │   └── globals.css
-  │       ├── tailwind.config.js
-  │       └── tsconfig.json
-+ ├── e2e
-+ │   ├── cypress
-+ │   │   ├── e2e
-+ │   │   │   └── calendar.cy.ts
-+ │   │   ├── fixtures
-+ │   │   │   └── example.json
-+ │   │   └── support
-+ │   │       ├── commands.ts
-+ │   │       └── e2e.ts
-+ │   ├── cypress.config.ts
-+ │   ├── package.json
-+ │   └── tsconfig.json
-  ├── package.json
-  ├── packages
-  │   ├── button
-  │   │   ├── Button.tsx
-  │   │   ├── index.tsx
-  │   │   ├── package.json
-  │   │   └── tsconfig.json
-  │   ├── eslint-config-custom
-  │   │   ├── index.js
-  │   │   └── package.json
-  │   └── tsconfig
-  │       ├── README.md
-  │       ├── base.json
-  │       ├── nextjs.json
-  │       ├── package.json
-  │       └── react-library.json
-  ├── turbo.json
-  └── yarn.lock
-```
-
-7. 改成指向 `http://localhost:3000`
-
--- `calendar.cy.ts`
-
-```ts
-describe("calendar component", () => {
-  it("passes", () => {
-    cy.visit("http://localhost:3000");
-  });
-});
-```
-
 ## 以後的專案設置
 
 為了方便以後不要再重講一遍，  
 這邊解釋如何開始開發一個新的元件。
 
-1. 複製 `packages/button` 改成 需要的元件名稱，例如 `calendar`
+複製 `packages/button` 改成 需要的元件名稱，例如 `calendar`
 
 ```bash
 cp -r packages/{button,calendar}
 ```
 
-2. 進入 `packages/calendar`
+進入 `packages/calendar`
 
 ```bash
 cd packages/calendar
 ```
 
-3. 更改 `package.json`
+更改 `package.json`
 
 ```diff
     {
@@ -586,7 +424,7 @@ cd packages/calendar
     }
 ```
 
-4. 更改程式碼
+更改程式碼
 
 -- `index.tsx`
 
@@ -602,7 +440,7 @@ export const Calendar = () => {
 };
 ```
 
-5. 前往 `apps/web`
+前往 `apps/web`
 
 ```bash
 cd ../../apps/web
@@ -644,7 +482,19 @@ cd ../../apps/web
     }
 ```
 
-7. 更改測試環境
+更改成動態編譯元件
+
+-- `web/next.config.js`
+
+```js
+const withTM = require("next-transpile-modules")(["button", "calendar"]);
+
+module.exports = withTM({
+  reactStrictMode: true,
+});
+```
+
+更改測試環境
 
 ```tsx
 import { Calendar } from "calendar";
@@ -658,14 +508,14 @@ export default function Web() {
 }
 ```
 
-8. 回專案根目錄重新下載套件
+回專案根目錄重新下載套件
 
 ```bash
 cd ../..
 yarn
 ```
 
-9. 測試
+測試
 
 ```bash
 yarn dev
