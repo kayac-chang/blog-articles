@@ -22,14 +22,14 @@ hashtags: `#react`, `#dialog`
 
 ```tsx
 it("the element that serves as the dialog container has a role of dialog.", () => {
-  render(<Dialog data-testid="a" />);
+  render(<Dialog data-testid="a" aria-label="a" />);
   expect(screen.getByTestId("a")).toHaveAttribute("role", "dialog");
 });
 
 it("all elements required to operate the dialog are descendants of the element that has role dialog.", () => {
   render(
-    <Dialog data-testid="a">
-      <Dialog data-testid="b" />
+    <Dialog data-testid="a" aria-label="a">
+      <Dialog data-testid="b" aria-label="b" />
     </Dialog>
   );
   expect(screen.getByTestId("a")).toHaveAttribute("role", "dialog");
@@ -88,7 +88,6 @@ export function Dialog(props: DialogProps) {
 ```tsx
 describe("the dialog has either:", () => {
   it("a value set for the aria-labelledby property that refers to a visible dialog title.", () => {
-    //
     render(
       <Dialog>
         <Dialog.Title>This is Title</Dialog.Title>
@@ -111,88 +110,51 @@ describe("the dialog has either:", () => {
     );
     expect(screen.getByRole("dialog")).not.toHaveAttribute("aria-labelledby");
   });
-
-  it("dialog should has either", () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(() => render(<Dialog />)).toThrow(
-      "dialog should has either: \n" +
-        "- a value set for the aria-labelledby property that refers to a visible dialog title.\n" +
-        "- a label specified by aria-label."
-    );
-    vi.clearAllMocks();
-  });
-});
-```
-
-假如 `dialog` 沒有標示 `label` 要拋錯，所以前面的測試要改。
-
-```tsx
-it("the element that serves as the dialog container has a role of dialog.", () => {
-  render(<Dialog data-testid="a" aria-label="a" />);
-  expect(screen.getByTestId("a")).toHaveAttribute("role", "dialog");
-});
-
-it("all elements required to operate the dialog are descendants of the element that has role dialog.", () => {
-  render(
-    <Dialog data-testid="a" aria-label="a">
-      <Dialog data-testid="b" aria-label="b" />
-    </Dialog>
-  );
-  expect(screen.getByTestId("a")).toHaveAttribute("role", "dialog");
-  expect(screen.getByTestId("b")).toHaveAttribute("role", "dialog");
-});
-
-it("the dialog container element has aria-modal set to true.", () => {
-  render(<Dialog data-testid="a" aria-label="a" />);
-  expect(screen.getByTestId("a")).toHaveAttribute("aria-modal", "true");
 });
 ```
 
 ### Solution
 
-這邊先行檢查了 `children` 底下是否有 `Title`，沒有就去檢查 `aria-label`，  
-兩者都沒有則拋出錯誤，用來提示用戶要記得標注標題。
+```tsx
+type State = {
+  labelledby: string;
+};
+const Context = createContext<State | null>(null);
+function useDialogContext(message?: string) {
+  const context = useContext(Context);
+  if (!context) {
+    throw new Error(message);
+  }
+  return context;
+}
+```
 
 ```tsx
-type TitleProps = ComponentProps<"h2">;
-function Title(props: TitleProps) {
-  return <h2 {...props} />;
+function Title<E extends ElementType>(props: PCP<E, {}>) {
+  const context = useDialogContext(
+    `<Dialog.Title> cannot be rendered outside <Dialog />`
+  );
+  const Comp = props.as ?? "h2";
+  return <Comp id={context.labelledby} {...props} />;
 }
 
 type DialogProps = ComponentProps<"div">;
 export function Dialog(props: DialogProps) {
   const id = useId();
-
-  let labelledby = undefined;
-  Children.forEach(props.children, (element) => {
-    if (isValidElement(element) && element.type === Title) {
-      labelledby = id;
-    }
-  });
-
-  if (!labelledby && !props["aria-label"]) {
-    throw new Error(
-      "dialog should has either: \n" +
-        "- a value set for the aria-labelledby property that refers to a visible dialog title.\n" +
-        "- a label specified by aria-label."
-    );
-  }
+  const context = {
+    labelledby: id + "labelledby",
+    describedby: id + "describedby",
+  };
 
   return (
-    <div
-      {...props}
-      aria-modal="true"
-      role="dialog"
-      aria-labelledby={labelledby}
-    >
-      {Children.map(props.children, (element) => {
-        if (isValidElement(element) && element.type === Title) {
-          return cloneElement(element, { ...element.props, id });
-        }
-
-        return element;
-      })}
-    </div>
+    <Context.Provider value={context}>
+      <div
+        {...props}
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
+      />
+    </Context.Provider>
   );
 }
 ```
@@ -224,66 +186,34 @@ it("optionally, the aria-describedby property is set on the element with the dia
 ### Solution
 
 ```tsx
-type DescriptionProps = ComponentProps<"div">;
-function Description(props: DescriptionProps) {
-  return <div {...props} />;
+function Description<E extends ElementType>(props: PCP<E, {}>) {
+  const context = useDialogContext(
+    `<Dialog.Description> cannot be rendered outside <Dialog />`
+  );
+  const Comp = props.as ?? "div";
+  return <Comp id={context.describedby} {...props} />;
 }
+```
 
-type TitleProps = ComponentProps<"h2">;
-function Title(props: TitleProps) {
-  return <h2 {...props} />;
-}
-
+```tsx
 type DialogProps = ComponentProps<"div">;
 export function Dialog(props: DialogProps) {
   const id = useId();
-
-  let labelledby: string | undefined = undefined;
-  let describedby: string | undefined = undefined;
-  Children.forEach(props.children, (element) => {
-    if (!isValidElement(element)) return;
-
-    if (element.type === Title) {
-      labelledby = id + "label";
-    }
-    if (element.type === Description) {
-      describedby = id + "description";
-    }
-  });
-
-  if (!labelledby && !props["aria-label"]) {
-    throw new Error(
-      "dialog should has either: \n" +
-        "- a value set for the aria-labelledby property that refers to a visible dialog title.\n" +
-        "- a label specified by aria-label."
-    );
-  }
+  const context = {
+    labelledby: id + "labelledby",
+    describedby: id + "describedby",
+  };
 
   return (
-    <div
-      {...props}
-      aria-modal="true"
-      role="dialog"
-      aria-labelledby={labelledby}
-      aria-describedby={describedby}
-    >
-      {Children.map(props.children, (element) => {
-        if (isValidElement(element)) {
-          let id = undefined;
-
-          if (element.type === Title) {
-            id = labelledby;
-          }
-          if (element.type === Description) {
-            id = describedby;
-          }
-
-          return cloneElement(element, { ...element.props, id });
-        }
-
-        return element;
-      })}
-    </div>
+    <Context.Provider value={context}>
+      <div
+        {...props}
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
+        aria-describedby={context.describedby}
+      />
+    </Context.Provider>
   );
 }
 ```

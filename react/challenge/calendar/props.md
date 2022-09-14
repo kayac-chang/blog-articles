@@ -278,12 +278,9 @@ export function Calendar<E extends ElementType = "div">(
 }
 ```
 
-像是指定 `h1` ~ `h6`，也可以。
-
 ```tsx
-type Level = 1 | 2 | 3 | 4 | 5 | 6;
-export type TitleProps<E extends `h${Level}`> = PCP<E, {}>;
-function Title<E extends `h${Level}`>(props: TitleProps<E>) {
+export type TitleProps<E extends ElementType> = PCP<E, {}>;
+function Title<E extends ElementType>(props: TitleProps<E>) {
   const context = useCalendarContext(
     `<Calendar.Title /> cannot be rendered outside <Calendar />`
   );

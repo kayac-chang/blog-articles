@@ -31,7 +31,7 @@ hashtags: `#react`, `#dialog`
 
 ```tsx
 const setup = () => {
-  userEvent.setup();
+  user.setup();
   render(
     <Dialog aria-label="title">
       <input data-testid="element" type="checkbox" />
@@ -44,9 +44,7 @@ const setup = () => {
 describe("dialog open", () => {
   it("When a dialog opens, focus moves to an element contained in the dialog", () => {
     setup();
-
     const [checkbox] = screen.getAllByTestId("element");
-
     expect(checkbox).toHaveFocus();
   });
 });
@@ -74,31 +72,7 @@ type DialogProps = ComponentProps<"div"> & {
 export function Dialog(_props: DialogProps) {
   const { children, initialFocusRef, ...props } = _props;
 
-  const id = useId();
-
-  let labelledby: string | undefined = undefined;
-  let describedby: string | undefined = undefined;
-  Children.forEach(children, (element) => {
-    if (!isValidElement(element)) return;
-
-    if (element.type === Title) {
-      labelledby = id + "label";
-    }
-    if (element.type === Description) {
-      describedby = id + "description";
-    }
-  });
-
-  if (!labelledby && !props["aria-label"]) {
-    throw new Error(
-      "dialog should has either: \n" +
-        "- a value set for the aria-labelledby property that refers to a visible dialog title.\n" +
-        "- a label specified by aria-label."
-    );
-  }
-
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -110,32 +84,23 @@ export function Dialog(_props: DialogProps) {
     focus(initialFocusRef?.current ?? tabbables.at(0));
   }, [ref.current, initialFocusRef?.current]);
 
+  const id = useId();
+  const context = {
+    labelledby: id + "labelledby",
+    describedby: id + "describedby",
+  };
+
   return (
-    <div
-      {...props}
-      aria-modal="true"
-      role="dialog"
-      aria-labelledby={labelledby}
-      aria-describedby={describedby}
-      ref={ref}
-    >
-      {Children.map(children, (element) => {
-        if (isValidElement(element)) {
-          let id = undefined;
-
-          if (element.type === Title) {
-            id = labelledby;
-          }
-          if (element.type === Description) {
-            id = describedby;
-          }
-
-          return cloneElement(element, { ...element.props, id });
-        }
-
-        return element;
-      })}
-    </div>
+    <Context.Provider value={context}>
+      <div
+        {...props}
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
+        aria-describedby={context.describedby}
+        ref={ref}
+      />
+    </Context.Provider>
   );
 }
 ```
@@ -149,32 +114,23 @@ export function Dialog(_props: DialogProps) {
 describe("tab", () => {
   it("moves focus to the next tabbable element inside the dialog.", async () => {
     setup();
-
     const [checkbox, radio, number] = screen.getAllByTestId("element");
-
     expect(checkbox).toHaveFocus();
-
-    await userEvent.keyboard("{Tab}");
+    await user.keyboard("{Tab}");
     expect(radio).toHaveFocus();
-
-    await userEvent.keyboard("{Tab}");
+    await user.keyboard("{Tab}");
     expect(number).toHaveFocus();
-
-    await userEvent.keyboard("{Tab}");
+    await user.keyboard("{Tab}");
     expect(checkbox).toHaveFocus();
   });
 
   it("if focus is on the last tabbable element inside the dialog, \
         moves focus to the first tabbable element inside the dialog.", async () => {
     setup();
-
     const [checkbox, _, number] = screen.getAllByTestId("element");
-
     number.focus();
-
     expect(number).toHaveFocus();
-
-    await userEvent.keyboard("{Tab}");
+    await user.keyboard("{Tab}");
     expect(checkbox).toHaveFocus();
   });
 });
@@ -226,32 +182,23 @@ useEffect(() => {
 describe("shift + tab", () => {
   it("moves focus to the previous tabbable element inside the dialog.", async () => {
     setup();
-
     const [checkbox, radio, number] = screen.getAllByTestId("element");
-
     expect(checkbox).toHaveFocus();
-
-    await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
+    await user.keyboard("{Shift>}{Tab}{/Shift}");
     expect(number).toHaveFocus();
-
-    await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
+    await user.keyboard("{Shift>}{Tab}{/Shift}");
     expect(radio).toHaveFocus();
-
-    await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
+    await user.keyboard("{Shift>}{Tab}{/Shift}");
     expect(checkbox).toHaveFocus();
   });
 
   it("if focus is on the first tabbable element inside the dialog, \
         moves focus to the last tabbable element inside the dialog.", async () => {
     setup();
-
     const [checkbox, _, number] = screen.getAllByTestId("element");
-
     checkbox.focus();
-
     expect(checkbox).toHaveFocus();
-
-    await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
+    await user.keyboard("{Shift>}{Tab}{/Shift}");
     expect(number).toHaveFocus();
   });
 });
@@ -311,29 +258,6 @@ type DialogProps = ComponentProps<"div"> & {
 export function Dialog(_props: DialogProps) {
   const { children, onDismiss, initialFocusRef, ...props } = _props;
 
-  const id = useId();
-
-  let labelledby: string | undefined = undefined;
-  let describedby: string | undefined = undefined;
-  Children.forEach(children, (element) => {
-    if (!isValidElement(element)) return;
-
-    if (element.type === Title) {
-      labelledby = id + "label";
-    }
-    if (element.type === Description) {
-      describedby = id + "description";
-    }
-  });
-
-  if (!labelledby && !props["aria-label"]) {
-    throw new Error(
-      "dialog should has either: \n" +
-        "- a value set for the aria-labelledby property that refers to a visible dialog title.\n" +
-        "- a label specified by aria-label."
-    );
-  }
-
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current;
@@ -347,6 +271,7 @@ export function Dialog(_props: DialogProps) {
 
     function onKeyDown(event: KeyboardEvent) {
       if (!(document.activeElement instanceof HTMLElement)) return;
+      if (!element?.contains(document.activeElement)) return;
 
       const index = tabbables.indexOf(document.activeElement);
       const { key, shiftKey } = event;
@@ -371,34 +296,25 @@ export function Dialog(_props: DialogProps) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => void window.removeEventListener("keydown", onKeyDown);
-  }, [ref.current, initialFocusRef?.current, onDismiss]);
+  }, [ref.current, initialFocusRef?.current, lastFocus.current, onDismiss]);
+
+  const id = useId();
+  const context = {
+    labelledby: id + "labelledby",
+    describedby: id + "describedby",
+  };
 
   return (
-    <div
-      {...props}
-      aria-modal="true"
-      role="dialog"
-      aria-labelledby={labelledby}
-      aria-describedby={describedby}
-      ref={ref}
-    >
-      {Children.map(children, (element) => {
-        if (isValidElement(element)) {
-          let id = undefined;
-
-          if (element.type === Title) {
-            id = labelledby;
-          }
-          if (element.type === Description) {
-            id = describedby;
-          }
-
-          return cloneElement(element, { ...element.props, id });
-        }
-
-        return element;
-      })}
-    </div>
+    <Context.Provider value={context}>
+      <div
+        {...props}
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
+        aria-describedby={context.describedby}
+        ref={ref}
+      />
+    </Context.Provider>
   );
 }
 ```

@@ -255,7 +255,6 @@ function VerificationResult(props: ModalProps) {
 ```tsx
 const lastFocus = useRef(0);
 const ref = useRef<HTMLDivElement>(null);
-
 useEffect(() => {
   const element = ref.current;
   if (!element) return;
@@ -332,18 +331,10 @@ function Backdrop(props: BackdropProps) {
 利用之前的 `slot pattern` 擷取出 `Backdrop`。
 
 ```tsx
-let labelledby: string | undefined = undefined;
-let describedby: string | undefined = undefined;
 let backdrop: ReactNode | undefined = undefined;
 Children.forEach(children, (element) => {
   if (!isValidElement(element)) return;
 
-  if (element.type === Title) {
-    labelledby = id + "label";
-  }
-  if (element.type === Description) {
-    describedby = id + "description";
-  }
   if (element.type === Backdrop) {
     const onClick = () => {
       element.props.onClick?.();
@@ -356,37 +347,25 @@ Children.forEach(children, (element) => {
 // ...
 
 return (
-  <>
+  <Context.Provider value={context}>
     {backdrop ?? <Backdrop onClick={onDismiss} />}
     <div
       {...props}
       aria-modal="true"
       role="dialog"
-      aria-labelledby={labelledby}
-      aria-describedby={describedby}
+      aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
+      aria-describedby={context.describedby}
       ref={ref}
     >
       {Children.map(children, (element) => {
-        if (isValidElement(element)) {
-          let id = undefined;
-
-          if (element.type === Title) {
-            id = labelledby;
-          }
-          if (element.type === Description) {
-            id = describedby;
-          }
-          if (element.type === Backdrop) {
-            return;
-          }
-
-          return cloneElement(element, { ...element.props, id });
+        if (isValidElement(element) && element.type === Backdrop) {
+          return;
         }
 
         return element;
       })}
     </div>
-  </>
+  </Context.Provider>
 );
 
 // ...
