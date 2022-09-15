@@ -1,6 +1,6 @@
 # 如何製作月曆 props【 calendar | 我不會寫 React Component 】
 
-hashtags: `#react`, `#calendar`, `#props`
+hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#props`
 
 本篇接續前篇 [如何製作月曆 compound components【 calendar | 我不會寫 React Component 】](./compound-components.md)  
 可以先看完上一篇在接續此篇。
@@ -70,10 +70,10 @@ function MyButton({ somethingElse, ...props }: MyButtonProps) {
 我會透過這個方式來延展日曆元件的傳入職。
 
 ```tsx
-export type MonthCalendarProps = ComponentProps<"table"> & {
+export type GridProps = ComponentProps<"table"> & {
   focus?: Date;
 };
-export const MonthCalendar = (props: MonthCalendarProps) => {
+const Grid = (props: GridProps) => {
   let columnheader: ReturnType<typeof ColumnHeader> | null = null;
   let gridcell: ReturnType<typeof GridCell> | null = null;
 
@@ -103,8 +103,8 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
   return (
     <Context.Provider value={{ focus, table }}>
       <table role="grid" {...rest}>
-        <thead>
-          <tr>{columnheader}</tr>
+        <thead role="rowgroup">
+          <tr role="row">{columnheader}</tr>
         </thead>
         <tbody>{gridcell}</tbody>
       </table>
@@ -133,29 +133,25 @@ function GridCell(props: GridCellProps) {
       {table.map((row, index) => (
         <tr key={index}>
           {row.map((day, index) => {
-            const element = day && props.children?.(day);
+            if (!day) {
+              return <td key={index} tabIndex={-1} />;
+            }
 
-            // if child is valid react element, pass focus to the child
-            if (isValidElement<{}>(element)) {
+            const element = props.children?.(day);
+            const tabIndex = isSameDay(day, focus) ? 0 : -1;
+
+            if (isValidElement(element)) {
               return (
-                <td
-                  key={index}
-                  {...props}
-                  children={cloneElement(element, {
-                    ...element.props,
-                    ...focus(Boolean(day && isSameDay(day, focusOn))),
-                  })}
-                />
+                <td key={index}>
+                  {cloneElement(element, { ...element.props, tabIndex })}
+                </td>
               );
             }
 
             return (
-              <td
-                key={index}
-                {...props}
-                {...focus(Boolean(day && isSameDay(day, focusOn)))}
-                children={element || (day && format(day, "dd"))}
-              />
+              <td key={index} tabIndex={tabIndex}>
+                {format(day, "dd")}
+              </td>
             );
           })}
         </tr>

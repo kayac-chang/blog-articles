@@ -1,6 +1,6 @@
 # 如何製作月曆 control【 calendar | 我不會寫 React Component 】
 
-hashtags: `#react`, `#calendar`
+hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#control`
 
 本篇接續前篇 [如何製作月曆 date grid 【 calendar | 我不會寫 React Component 】](./month-calendar.md)  
 可以先看完上一篇在接續此篇。
@@ -13,7 +13,7 @@ hashtags: `#react`, `#calendar`
 
 ```tsx
 describe("calendar should render correctly", () => {
-  it("should render button for change previous/next month", () => {
+  it("should render button for change previous/next month/year", () => {
     render(<Calendar />);
     expect(screen.getAllByRole("button", { name: /previous month/ }));
     expect(screen.getAllByRole("button", { name: /next month/ }));
@@ -68,7 +68,7 @@ export function Calendar(props: CalendarProps) {
         </button>
       </header>
 
-      <MonthCalendar />
+      <MonthCalendar.Grid />
     </div>
   );
 }
@@ -109,11 +109,9 @@ it("when click previous/next month, should change the month and year displayed i
 方便加入複雜邏輯時便於管理跟追蹤狀態變化。
 
 ```tsx
-import { add, format, sub } from "date-fns";
-import { useReducer } from "react";
-import { MonthCalendar } from "./MonthCalendar";
-
-type Action = "previous year" | "previous month" | "next month" | "next year";
+type Control = "previous" | "next";
+type Unit = "year" | "month";
+type Action = `${Control} ${Unit}`;
 function reducer(date: Date, action: Action) {
   if (action === "previous month") {
     return sub(date, { months: 1 });
@@ -182,7 +180,13 @@ export function Calendar(props: CalendarProps) {
 
 用戶可以用鍵盤控制：
 
--
+- <kbd>PageDown</kbd>：將日曆格換到上一個月。
+- <kbd>PageUp</kbd>：將日曆格換到下一個月。
+- <kbd>Shift + PageDown</kbd>：將日曆格換到上一年。
+- <kbd>Shift + PageUp</kbd>：將日曆格換到下一年。
+
+切換後，將焦點對焦到同一週的同一天。  
+如果那天不存在則對焦到上一週或下一週的同一天。
 
 ```tsx
 it("user can change month/year using keyboard", async () => {
@@ -203,39 +207,39 @@ it("user can change month/year using keyboard", async () => {
 });
 
 it(
-  "Sets focus on the same day of the same week." +
-    "If that day does not exist, then moves focus to the same day of the previous or next week.",
+  "sets focus on the same day of the same week." +
+    "if that day does not exist, then moves focus to the same day of the previous or next week.",
   async () => {
     userEvent.setup();
     render(<Calendar value={new Date(0)} />);
 
     let index = screen
       .getAllByRole(/(grid)?cell/)
-      .findIndex((el) => el === document.activeElement);
+      .findIndex((el) => el.getAttribute("tabindex") === "0");
     expect(index % 7).toBe(4);
 
     await userEvent.keyboard("{PageDown}");
     index = screen
       .getAllByRole(/(grid)?cell/)
-      .findIndex((el) => el === document.activeElement);
+      .findIndex((el) => el.getAttribute("tabindex") === "0");
     expect(index % 7).toBe(0);
 
     await userEvent.keyboard("{PageUp}");
     index = screen
       .getAllByRole(/(grid)?cell/)
-      .findIndex((el) => el === document.activeElement);
+      .findIndex((el) => el.getAttribute("tabindex") === "0");
     expect(index % 7).toBe(4);
 
     await userEvent.keyboard("{Shift>}{PageDown}{/Shift}");
     index = screen
       .getAllByRole(/(grid)?cell/)
-      .findIndex((el) => el === document.activeElement);
+      .findIndex((el) => el.getAttribute("tabindex") === "0");
     expect(index % 7).toBe(5);
 
     await userEvent.keyboard("{Shift>}{PageUp}{/Shift}");
     index = screen
       .getAllByRole(/(grid)?cell/)
-      .findIndex((el) => el === document.activeElement);
+      .findIndex((el) => el.getAttribute("tabindex") === "0");
     expect(index % 7).toBe(4);
   }
 );
@@ -244,11 +248,9 @@ it(
 ### Solution
 
 ```tsx
-import { add, format, sub } from "date-fns";
-import { useEffect, useReducer } from "react";
-import { MonthCalendar } from "./MonthCalendar";
-
-type Action = "previous year" | "previous month" | "next month" | "next year";
+type Control = "previous" | "next";
+type Unit = "year" | "month";
+type Action = `${Control} ${Unit}`;
 function reducer(date: Date, action: Action) {
   if (action === "previous month") {
     return sub(date, { months: 1 });
@@ -323,7 +325,7 @@ export function Calendar(props: CalendarProps) {
         </button>
       </header>
 
-      <MonthCalendar focus={current} key={current.valueOf()} />
+      <MonthCalendar.Grid focus={current} key={current.valueOf()} />
     </div>
   );
 }
@@ -337,10 +339,5 @@ export function Calendar(props: CalendarProps) {
 
 這其實符合我的預期，  
 我們會在下一個章節解決這個問題。
-
-## 名詞對照
-
-| 中文 | 英文 |
-| ---- | ---- |
 
 [resetting]: https://beta.reactjs.org/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes

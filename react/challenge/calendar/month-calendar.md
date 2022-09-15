@@ -1,6 +1,6 @@
 # 如何製作月曆 date grid 【 calendar | 我不會寫 React Component 】
 
-hashtags: `#react`, `#calendar`
+hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#date-grid`
 
 ## About
 
@@ -21,8 +21,8 @@ hashtags: `#react`, `#calendar`
 可以透過跟 button 的組合，讓用戶選擇其中的天數。
 
 ```tsx
-it("Identifies the table element as a grid widget.", () => {
-  render(<MonthCalendar />);
+it("identifies the table element as a grid widget", () => {
+  render(<MonthCalendar.Grid />);
 
   expect(screen.getByRole("grid")).toBeInTheDocument();
 });
@@ -38,8 +38,12 @@ it("Identifies the table element as a grid widget.", () => {
 `td`： [cell][gridcell-role]。
 
 ```tsx
-export const Calendar = () => {
+const Grid = () => {
   return <table role="grid"></table>;
+};
+
+export const MonthCalendar = {
+  Grid,
 };
 ```
 
@@ -50,37 +54,36 @@ export const Calendar = () => {
 且第一天是星期四。
 
 ```tsx
-describe("If focus on January 1970", () => {
-  it("Should render days in month correctly", () => {
-    const { container } = render(<MonthCalendar focus={new Date(0)} />);
+describe("if focus on january 1970", () => {
+  it("should render days in month correctly", () => {
+    const current = new Date(0);
+    render(<MonthCalendar.Grid focus={current} />);
 
     eachDayOfInterval({
-      start: new Date(0),
-      end: endOfMonth(new Date(0)),
+      start: current,
+      end: endOfMonth(current),
     }).forEach((day) =>
-      expect(container).toHaveTextContent(RegExp(format(day, "dd")))
+      expect(screen.queryByText(RegExp(format(day, "dd")))).toBeInTheDocument()
     );
   });
 
-  it("the first day should Thursday", () => {
-    render(<MonthCalendar focus={new Date(0)} />);
+  it("first day should thursday", () => {
+    render(<MonthCalendar.Grid focus={new Date(0)} />);
 
     expect(screen.getAllByRole(/(grid)?cell/).at(4))
       //
       .toHaveTextContent("01");
   });
 
-  it("If focus on January 1970 first, then change focus to February 1970", () => {
+  it("change focus to february 1970, first day should be sunday", () => {
     const first = new Date(0);
-    const { rerender } = render(
-      <MonthCalendar focus={first} key={first.valueOf()} />
-    );
+    const { rerender } = render(<MonthCalendar.Grid focus={first} />);
     expect(screen.getAllByRole(/(grid)?cell/).at(4))
       //
       .toHaveTextContent("01");
 
-    const second = add(new Date(0), { months: 1 });
-    rerender(<MonthCalendar focus={second} key={second.valueOf()} />);
+    const second = add(first, { months: 1 });
+    rerender(<MonthCalendar.Grid focus={second} />);
     expect(screen.getAllByRole(/(grid)?cell/).at(0))
       //
       .toHaveTextContent("01");
@@ -93,30 +96,21 @@ describe("If focus on January 1970", () => {
 這邊使用 [date-dns] 跟 [ramda] 幫我們處理掉太 low-level 的操作。
 
 ```tsx
-import {
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  getDay,
-  startOfMonth,
-} from "date-fns";
-import { concat, repeat, splitEvery } from "ramda";
-
-const getDatesInMonth = (focusOn: Date) =>
+const getDatesInMonth = (focus: Date) =>
   eachDayOfInterval({
-    start: startOfMonth(focusOn),
-    end: endOfMonth(focusOn),
+    start: startOfMonth(focus),
+    end: endOfMonth(focus),
   });
 
-type MonthCalendarProps = {
+type GridProps = {
   focus?: Date;
 };
-export const MonthCalendar = (props: MonthCalendarProps) => {
-  const focusOn = props.focus ?? new Date();
+const Grid = (props: GridProps) => {
+  const focus = props.focus ?? new Date();
 
   const days = concat(
-    repeat(undefined, getDay(startOfMonth(focusOn))),
-    getDatesInMonth(focusOn)
+    repeat(undefined, getDay(startOfMonth(focus))),
+    getDatesInMonth(focus)
   );
 
   const table = splitEvery(7, days);
@@ -144,37 +138,25 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
 其他需要可聚焦的元素設成 `tabindex="-1"`。
 
 ```tsx
-describe("When the component container is loaded or created", () => {
-  it("If focusOn is January 1970, should be focus on January 1970", () => {
-    render(<MonthCalendar focus={new Date(0)} />);
+describe("makes the cell focusable, and implement roving tabindex", () => {
+  it(`set tabindex="0" on the element that will initially be included in the tab sequence`, () => {
+    render(<MonthCalendar.Grid focus={new Date(0)} />);
 
-    expect(document.activeElement)
-      //
-      .toHaveTextContent("01");
+    expect(
+      screen
+        .queryAllByRole(/(grid)?cell/)
+        .filter((element) => element.getAttribute("tabindex") === "0")
+    ).toHaveLength(1);
   });
 
-  it("Default focus on today", () => {
-    render(<MonthCalendar />);
+  it(`set tabindex="-1" on all other focusable elements it contains`, () => {
+    render(<MonthCalendar.Grid focus={new Date(0)} />);
 
-    expect(document.activeElement)
-      //
-      .toHaveTextContent(RegExp(format(new Date(), "dd")));
-  });
-
-  it(`Set tabindex="0" on the element that will initially be included in the tab sequence`, () => {
-    render(<MonthCalendar />);
-
-    expect(document.activeElement)
-      //
-      .toHaveAttribute("tabindex", "0");
-  });
-
-  it(`Set tabindex="-1" on all other focusable elements it contains.`, () => {
-    Array.from(
-      render(<MonthCalendar />).container.querySelectorAll(`[tabindex]`)
-    )
-      .filter((el) => el !== document.activeElement)
-      .forEach((el) => expect(el).toHaveAttribute("tabindex", "-1"));
+    expect(
+      screen
+        .queryAllByRole(/(grid)?cell/)
+        .filter((element) => element.getAttribute("tabindex") === "-1")
+    ).toHaveLength(34);
   });
 });
 ```
@@ -182,41 +164,21 @@ describe("When the component container is loaded or created", () => {
 ### Solution
 
 ```tsx
-import {
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  getDay,
-  isSameDay,
-  startOfMonth,
-} from "date-fns";
-import { concat, repeat, splitEvery } from "ramda";
-
-const getDatesInMonth = (focusOn: Date) =>
+const getDatesInMonth = (focus: Date) =>
   eachDayOfInterval({
-    start: startOfMonth(focusOn),
-    end: endOfMonth(focusOn),
+    start: startOfMonth(focus),
+    end: endOfMonth(focus),
   });
 
-const focus = (isFocus: boolean) =>
-  isFocus
-    ? {
-        tabIndex: 0,
-        ref: (el: HTMLElement | null) => el?.focus(),
-      }
-    : {
-        tabIndex: -1,
-      };
-
-type MonthCalendarProps = {
+type GridProps = {
   focus?: Date;
 };
-export const MonthCalendar = (props: MonthCalendarProps) => {
-  const focusOn = props.focus ?? new Date();
+const Grid = (props: GridProps) => {
+  const focus = props.focus ?? new Date();
 
   const days = concat(
-    repeat(undefined, getDay(startOfMonth(focusOn))),
-    getDatesInMonth(focusOn)
+    repeat(undefined, getDay(startOfMonth(focus))),
+    getDatesInMonth(focus)
   );
 
   const table = splitEvery(7, days);
@@ -227,237 +189,7 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
         {table.map((row, index) => (
           <tr key={index}>
             {row.map((day, index) => (
-              <td
-                key={index}
-                {...focus(Boolean(day && isSameDay(day, focusOn)))}
-              >
-                {day ? format(day, "dd") : null}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-};
-```
-
-## Spec: Roving tabindex Navigation
-
-當焦點目前落在元件上時，  
-可以用 箭頭上下左右 跟 Home, End 下去移動焦點，  
-且 `tabindex="0"` 會跟著當前焦點移動。
-
-當按 <kbd>Arrow Up</kbd> 的時候，焦點要往上一格。
-當按 <kbd>Arrow Down</kbd> 的時候，焦點要往下一格。
-當按 <kbd>Arrow Left</kbd> 的時候，焦點要往左一格。
-當按 <kbd>Arrow Right</kbd> 的時候，焦點要往右一格。
-當按 <kbd>Home</kbd> 的時候，焦點要移動到該週第一天。
-當按 <kbd>End</kbd> 的時候，焦點要移動到該週最後一天。
-
-```tsx
-describe("When the component contains focus and the user presses a navigation key", () => {
-  it(`set tabindex="-1" on the element that has tabindex="0"`, async () => {
-    const user = userEvent.setup();
-
-    render(<MonthCalendar focus={new Date(0)} />);
-
-    const element = screen.getByText(format(new Date(0), "dd"));
-    expect(element).toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[ArrowDown]");
-    expect(element).toHaveAttribute("tabindex", "-1");
-
-    await user.keyboard("[ArrowUp]");
-    expect(element).toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[ArrowLeft]");
-    expect(element).toHaveAttribute("tabindex", "-1");
-
-    await user.keyboard("[ArrowRight]");
-    expect(element).toHaveAttribute("tabindex", "0");
-  });
-
-  it(`set tabindex="0" on the element that will become focused`, async () => {
-    const user = userEvent.setup();
-
-    let current = new Date(0);
-    render(<MonthCalendar focus={current} />);
-
-    const getByText = screen.getByText;
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[ArrowDown]");
-    current = add(current, { weeks: 1 });
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[ArrowUp]");
-    current = sub(current, { weeks: 1 });
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[ArrowLeft]");
-    current = sub(current, { days: 1 });
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[ArrowRight]");
-    current = add(current, { days: 1 });
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[Home]");
-    current = startOfWeek(current);
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-
-    await user.keyboard("[End]");
-    current = endOfWeek(current);
-    expect(getByText(format(current, "dd")))
-      //
-      .toHaveAttribute("tabindex", "0");
-  });
-
-  it(`Set focus, element.focus(), on the element that has tabindex="0"`, async () => {
-    const user = userEvent.setup();
-
-    let current = new Date(0);
-    render(<MonthCalendar focus={current} />);
-
-    const getByText = screen.getByText;
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await user.keyboard("[ArrowDown]");
-    current = add(current, { weeks: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await user.keyboard("[ArrowUp]");
-    current = sub(current, { weeks: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await user.keyboard("[ArrowLeft]");
-    current = sub(current, { days: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await user.keyboard("[ArrowRight]");
-    current = add(current, { days: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await user.keyboard("[Home]");
-    current = startOfWeek(current);
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await user.keyboard("[End]");
-    current = endOfWeek(current);
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-  });
-});
-```
-
-### Solution
-
-透過 `useReducer` 來處理 `focus` 的操作邏輯。
-
-```tsx
-import {
-  add,
-  eachDayOfInterval,
-  endOfMonth,
-  endOfWeek,
-  format,
-  getDay,
-  isSameDay,
-  startOfMonth,
-  startOfWeek,
-  sub,
-} from "date-fns";
-import { concat, repeat, splitEvery } from "ramda";
-import { useEffect, useReducer } from "react";
-
-const getDatesInMonth = (focusOn: Date) =>
-  eachDayOfInterval({
-    start: startOfMonth(focusOn),
-    end: endOfMonth(focusOn),
-  });
-
-const focus = (isFocus: boolean) =>
-  isFocus
-    ? {
-        tabIndex: 0,
-        ref: (el: HTMLElement | null) => el?.focus(),
-      }
-    : {
-        tabIndex: -1,
-      };
-
-function reducer(focusOn: Date, key: string) {
-  if (key === "ArrowDown") {
-    return add(focusOn, { weeks: 1 });
-  }
-
-  if (key === "ArrowUp") {
-    return sub(focusOn, { weeks: 1 });
-  }
-
-  if (key === "ArrowLeft") {
-    return sub(focusOn, { days: 1 });
-  }
-
-  if (key === "ArrowRight") {
-    return add(focusOn, { days: 1 });
-  }
-
-  if (key === "Home") {
-    return startOfWeek(focusOn);
-  }
-
-  if (key === "End") {
-    return endOfWeek(focusOn);
-  }
-
-  return focusOn;
-}
-
-type MonthCalendarProps = {
-  focus?: Date;
-};
-export const MonthCalendar = (props: MonthCalendarProps) => {
-  const [focusOn, dispatch] = useReducer(reducer, props.focus ?? new Date());
-
-  useEffect(() => {
-    const keydown = ({ key }: KeyboardEvent) => dispatch(key);
-
-    window.addEventListener("keydown", keydown);
-    return () => {
-      window.removeEventListener("keydown", keydown);
-    };
-  }, [dispatch]);
-
-  const days = concat(
-    repeat(undefined, getDay(startOfMonth(focusOn))),
-    getDatesInMonth(focusOn)
-  );
-
-  const table = splitEvery(7, days);
-
-  return (
-    <table role="grid">
-      <tbody>
-        {table.map((row, index) => (
-          <tr key={index}>
-            {row.map((day, index) => (
-              <td
-                key={index}
-                {...focus(Boolean(day && isSameDay(day, focusOn)))}
-              >
+              <td key={index} tabIndex={day && isSameDay(day, focus) ? 0 : -1}>
                 {day ? format(day, "dd") : null}
               </td>
             ))}
@@ -472,7 +204,7 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
 ## Spec: WeekDay Header
 
 ```tsx
-describe("WeekDay Header", () => {
+describe("weekday header", () => {
   it.each([
     ["Su", "Sunday"],
     ["Mo", "Monday"],
@@ -482,7 +214,7 @@ describe("WeekDay Header", () => {
     ["Fr", "Friday"],
     ["Sa", "Saturday"],
   ])("the day %s in the column headers", (name, abbr) => {
-    render(<MonthCalendar />);
+    render(<MonthCalendar.Grid />);
 
     const el = screen.getByRole("columnheader", { name });
     expect(el).toBeInTheDocument();
@@ -494,83 +226,21 @@ describe("WeekDay Header", () => {
 ### Solution
 
 ```tsx
-import {
-  add,
-  eachDayOfInterval,
-  endOfMonth,
-  endOfWeek,
-  format,
-  getDay,
-  isSameDay,
-  startOfMonth,
-  startOfWeek,
-  sub,
-} from "date-fns";
-import { concat, repeat, splitEvery } from "ramda";
-import { useEffect, useReducer } from "react";
-
-const getDatesInMonth = (focusOn: Date) =>
+const getDatesInMonth = (focus: Date) =>
   eachDayOfInterval({
-    start: startOfMonth(focusOn),
-    end: endOfMonth(focusOn),
+    start: startOfMonth(focus),
+    end: endOfMonth(focus),
   });
 
-const focus = (isFocus: boolean) =>
-  isFocus
-    ? {
-        tabIndex: 0,
-        ref: (el: HTMLElement | null) => el?.focus(),
-      }
-    : {
-        tabIndex: -1,
-      };
-
-function reducer(focusOn: Date, key: string) {
-  if (key === "ArrowDown") {
-    return add(focusOn, { weeks: 1 });
-  }
-
-  if (key === "ArrowUp") {
-    return sub(focusOn, { weeks: 1 });
-  }
-
-  if (key === "ArrowLeft") {
-    return sub(focusOn, { days: 1 });
-  }
-
-  if (key === "ArrowRight") {
-    return add(focusOn, { days: 1 });
-  }
-
-  if (key === "Home") {
-    return startOfWeek(focusOn);
-  }
-
-  if (key === "End") {
-    return endOfWeek(focusOn);
-  }
-
-  return focusOn;
-}
-
-type MonthCalendarProps = {
+type GridProps = {
   focus?: Date;
 };
-export const MonthCalendar = (props: MonthCalendarProps) => {
-  const [focusOn, dispatch] = useReducer(reducer, props.focus ?? new Date());
-
-  useEffect(() => {
-    const keydown = ({ key }: KeyboardEvent) => dispatch(key);
-
-    window.addEventListener("keydown", keydown);
-    return () => {
-      window.removeEventListener("keydown", keydown);
-    };
-  }, [dispatch]);
+const Grid = (props: GridProps) => {
+  const focus = props.focus ?? new Date();
 
   const days = concat(
-    repeat(undefined, getDay(startOfMonth(focusOn))),
-    getDatesInMonth(focusOn)
+    repeat(undefined, getDay(startOfMonth(focus))),
+    getDatesInMonth(focus)
   );
 
   const table = splitEvery(7, days);
@@ -592,10 +262,7 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
         {table.map((row, index) => (
           <tr key={index}>
             {row.map((day, index) => (
-              <td
-                key={index}
-                {...focus(Boolean(day && isSameDay(day, focusOn)))}
-              >
+              <td key={index} tabIndex={day && isSameDay(day, focus) ? 0 : -1}>
                 {day ? format(day, "dd") : null}
               </td>
             ))}

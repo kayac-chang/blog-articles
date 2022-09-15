@@ -1,6 +1,6 @@
 # 如何製作月曆 integration【 calendar | 我不會寫 React Component 】
 
-hashtags: `#react`, `#calendar`
+hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#control`
 
 本篇接續前篇 [如何製作月曆 control【 calendar | 我不會寫 React Component 】](./calendar.md)  
 可以先看完上一篇在接續此篇。
@@ -74,58 +74,56 @@ describe("Integration: Calendar with MonthCalendar", () => {
   });
 
   it(
-    "Sets focus on the same day of the same week." +
-      "If that day does not exist, then moves focus to the same day of the previous or next week.",
+    "sets focus on the same day of the same week." +
+      "if that day does not exist, then moves focus to the same day of the previous or next week.",
     async () => {
       setup();
 
       let index = screen
         .getAllByRole(/(grid)?cell/)
-        .findIndex((el) => el === document.activeElement);
+        .findIndex((el) => el.getAttribute("tabindex") === "0");
       expect(index % 7).toBe(4);
 
       await userEvent.keyboard("{PageDown}");
       index = screen
         .getAllByRole(/(grid)?cell/)
-        .findIndex((el) => el === document.activeElement);
+        .findIndex((el) => el.getAttribute("tabindex") === "0");
       expect(index % 7).toBe(0);
 
       await userEvent.keyboard("{PageUp}");
       index = screen
         .getAllByRole(/(grid)?cell/)
-        .findIndex((el) => el === document.activeElement);
+        .findIndex((el) => el.getAttribute("tabindex") === "0");
       expect(index % 7).toBe(4);
 
       await userEvent.keyboard("{Shift>}{PageDown}{/Shift}");
       index = screen
         .getAllByRole(/(grid)?cell/)
-        .findIndex((el) => el === document.activeElement);
+        .findIndex((el) => el.getAttribute("tabindex") === "0");
       expect(index % 7).toBe(5);
 
       await userEvent.keyboard("{Shift>}{PageUp}{/Shift}");
       index = screen
         .getAllByRole(/(grid)?cell/)
-        .findIndex((el) => el === document.activeElement);
+        .findIndex((el) => el.getAttribute("tabindex") === "0");
       expect(index % 7).toBe(4);
     }
   );
 });
 ```
 
-## Lifting State Up 拉升狀態
+## Spec: Roving tabindex Navigation
 
-> Often, several components need to reflect the same changing data.
-> We recommend lifting the shared state up to their closest common ancestor.
+當焦點目前落在元件上時，  
+可以用 箭頭上下左右 跟 Home, End 下去移動焦點，  
+且 `tabindex="0"` 會跟著當前焦點移動。
 
-[Lifting State Up][lifting-state-up] 是撰寫 React 的一種技巧，
-大致上是指：有多個元件都共享同一狀態時，建議將該狀態定在元件的共有父元件下。
-
-接下來我會將原本放在 `MonthCalendar` 的狀態跟操作邏輯，拉升到 `Calendar`。
-
-### 轉移測試到整合測試
-
-- 首先把 `MonthCalendar.test.tsx` 的 `When the component contains focus and the user presses a navigation key` 整個搬到 `Calendar.test.tsx`。
-- 將裡面的內容稍微調整一下。
+當按 <kbd>Arrow Up</kbd> 的時候，焦點要往上一格。
+當按 <kbd>Arrow Down</kbd> 的時候，焦點要往下一格。
+當按 <kbd>Arrow Left</kbd> 的時候，焦點要往左一格。
+當按 <kbd>Arrow Right</kbd> 的時候，焦點要往右一格。
+當按 <kbd>Home</kbd> 的時候，焦點要移動到該週第一天。
+當按 <kbd>End</kbd> 的時候，焦點要移動到該週最後一天。
 
 ```tsx
 describe("When the component contains focus and the user presses a navigation key", () => {
@@ -193,126 +191,14 @@ describe("When the component contains focus and the user presses a navigation ke
       //
       .toHaveAttribute("tabindex", "0");
   });
-
-  it(`Set focus, element.focus(), on the element that has tabindex="0"`, async () => {
-    setup();
-
-    let current = new Date(0);
-    const getByText = screen.getByText;
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await userEvent.keyboard("[ArrowDown]");
-    current = add(current, { weeks: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await userEvent.keyboard("[ArrowUp]");
-    current = sub(current, { weeks: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await userEvent.keyboard("[ArrowLeft]");
-    current = sub(current, { days: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await userEvent.keyboard("[ArrowRight]");
-    current = add(current, { days: 1 });
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await userEvent.keyboard("[Home]");
-    current = startOfWeek(current);
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-
-    await userEvent.keyboard("[End]");
-    current = endOfWeek(current);
-    expect(getByText(format(current, "dd"))).toHaveFocus();
-  });
 });
-```
-
-### Refactoring 重構 MonthCalendar
-
-將原本的 `useReducer` 跟 `useEffect` 相關邏輯移除，  
-讓 `MonthCalendar` 變成 `stateless component`。
-
-```tsx
-import {
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  getDay,
-  isSameDay,
-  startOfMonth,
-} from "date-fns";
-import { concat, repeat, splitEvery } from "ramda";
-
-const getDatesInMonth = (focusOn: Date) =>
-  eachDayOfInterval({
-    start: startOfMonth(focusOn),
-    end: endOfMonth(focusOn),
-  });
-
-const focus = (isFocus: boolean) =>
-  isFocus
-    ? {
-        tabIndex: 0,
-        ref: (el: HTMLElement | null) => el?.focus(),
-      }
-    : {
-        tabIndex: -1,
-      };
-
-type MonthCalendarProps = {
-  focus?: Date;
-};
-export const MonthCalendar = (props: MonthCalendarProps) => {
-  const focusOn = props.focus ?? new Date();
-
-  const days = concat(
-    repeat(undefined, getDay(startOfMonth(focusOn))),
-    getDatesInMonth(focusOn)
-  );
-
-  const table = splitEvery(7, days);
-
-  return (
-    <table role="grid">
-      <thead>
-        <tr>
-          <th abbr="Sunday">Su</th>
-          <th abbr="Monday">Mo</th>
-          <th abbr="Tuesday">Tu</th>
-          <th abbr="Wednesday">We</th>
-          <th abbr="Thursday">Th</th>
-          <th abbr="Friday">Fr</th>
-          <th abbr="Saturday">Sa</th>
-        </tr>
-      </thead>
-      <tbody>
-        {table.map((row, index) => (
-          <tr key={index}>
-            {row.map((day, index) => (
-              <td
-                key={index}
-                {...focus(Boolean(day && isSameDay(day, focusOn)))}
-              >
-                {day ? format(day, "dd") : null}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-};
 ```
 
 ### Refactoring 重構 Calendar
 
-我們將狀態有關的操作都集中在 `Calendar`。
+將狀態有關的操作都集中在 `Calendar`。
 
 ```tsx
-import { add, endOfWeek, format, startOfWeek, sub } from "date-fns";
-import { Dispatch, ReactNode, useEffect, useReducer } from "react";
-
 type Control = "previous" | "next" | "start of" | "end of";
 type Unit = "year" | "month" | "week" | "day";
 type Action = `${Control} ${Unit}`;
@@ -398,7 +284,6 @@ export function Calendar(props: CalendarProps) {
 
   useEffect(() => {
     const keydown = keymap(dispatch);
-
     window.addEventListener("keydown", keydown);
     return () => {
       window.removeEventListener("keydown", keydown);

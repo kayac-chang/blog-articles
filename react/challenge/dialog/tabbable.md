@@ -1,6 +1,6 @@
 # 如何製作對話視窗 tabbable【 dialog | 我不會寫 React Component 】
 
-hashtags: `#react`, `#dialog`, `#tabbable`
+hashtags: `#react`, `#components`, `#accessibility`, `#dialog`, `#tabbable`
 
 本篇接續前篇 [如何製作對話視窗 dialog【 dialog | 我不會寫 React Component 】](./intro.md)  
 可以先看完上一篇在接續此篇。
@@ -10,8 +10,8 @@ hashtags: `#react`, `#dialog`, `#tabbable`
 
 因為接下來要繼續製作 `dialog` 就會遇到要控制焦點的邏輯，  
 理論上這個篇章複雜到應該要獨立寫成一篇，  
-甚至要獨立成一個 package，更甚至不應該自己寫，  
-但先這樣。
+甚至要獨立成一個 package，不應該自己寫，  
+但這邊還是試著實作一遍。
 
 ## Spec: Tabbable
 

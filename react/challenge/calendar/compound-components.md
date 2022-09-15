@@ -1,6 +1,6 @@
 # 如何製作月曆 compound components【 calendar | 我不會寫 React Component 】
 
-hashtags: `#react`, `#calendar`, `#compound components`
+hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#compound components`
 
 本篇接續前篇 [如何製作月曆 integration【 calendar | 我不會寫 React Component 】](./integration.md)  
 可以先看完上一篇在接續此篇。
@@ -126,13 +126,6 @@ Well... 這算 ...
 首先先將測試調整成我們想要的 Compound Components 形式。
 
 ```tsx
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { add, endOfWeek, format, startOfWeek, sub } from "date-fns";
-import { describe, expect, it } from "vitest";
-import { Calendar } from "../Calendar";
-import { MonthCalendar } from "../MonthCalendar";
-
 describe("<Calendar />", () => {
   describe("calendar should render correctly", () => {
     it("should render button for change previous/next month/year", () => {
@@ -163,7 +156,7 @@ describe("<Calendar />", () => {
   });
 });
 
-describe("Integration: Calendar with MonthCalendar", () => {
+describe("integration: calendar with monthcalendar", () => {
   const setup = () => {
     userEvent.setup();
     render(
@@ -178,11 +171,11 @@ describe("Integration: Calendar with MonthCalendar", () => {
           <Calendar.Button action="next year">{">>"}</Calendar.Button>
         </Calendar.Header>
 
-        <MonthCalendar>
+        <MonthCalendar.Grid>
           <MonthCalendar.ColumnHeader />
 
           <MonthCalendar.GridCell />
-        </MonthCalendar>
+        </MonthCalendar.Grid>
       </Calendar>
     );
   };
@@ -205,14 +198,11 @@ interface State {
   dispatch: Dispatch<Action>;
 }
 export const Context = createContext<State | null>(null);
-
 function useCalendarContext(error: string) {
   const context = useContext(Context);
-
   if (!context) {
     throw new Error(error);
   }
-
   return context;
 }
 
@@ -270,7 +260,6 @@ export function Calendar(props: CalendarProps) {
 
   useEffect(() => {
     const keydown = keymap(dispatch);
-
     window.addEventListener("keydown", keydown);
     return () => {
       window.removeEventListener("keydown", keydown);
@@ -299,7 +288,7 @@ Calendar.Title = Title;
 
 ```tsx
 describe("<MonthCalendar />", () => {
-  describe("WeekDay Header", () => {
+  describe("weekday header", () => {
     it.each([
       ["Su", "Sunday"],
       ["Mo", "Monday"],
@@ -310,9 +299,9 @@ describe("<MonthCalendar />", () => {
       ["Sa", "Saturday"],
     ])("the day %s in the column headers", (name, abbr) => {
       render(
-        <MonthCalendar>
+        <MonthCalendar.Grid>
           <MonthCalendar.ColumnHeader />
-        </MonthCalendar>
+        </MonthCalendar.Grid>
       );
 
       const el = screen.getByRole("columnheader", { name });
@@ -322,34 +311,36 @@ describe("<MonthCalendar />", () => {
   });
 
   describe("Date Grid", () => {
-    //
-    it("Identifies the table element as a grid widget.", () => {
-      render(<MonthCalendar />);
+    it("identifies the table element as a grid widget", () => {
+      render(<MonthCalendar.Grid />);
 
       expect(screen.getByRole("grid")).toBeInTheDocument();
     });
 
-    describe("If focus on January 1970", () => {
-      it("Should render days in month correctly", () => {
-        const { container } = render(
-          <MonthCalendar focus={new Date(0)}>
+    describe("if focus on january 1970", () => {
+      it("should render days in month correctly", () => {
+        const current = new Date(0);
+        render(
+          <MonthCalendar.Grid focus={current}>
             <MonthCalendar.GridCell />
-          </MonthCalendar>
+          </MonthCalendar.Grid>
         );
 
         eachDayOfInterval({
-          start: new Date(0),
-          end: endOfMonth(new Date(0)),
+          start: current,
+          end: endOfMonth(current),
         }).forEach((day) =>
-          expect(container).toHaveTextContent(RegExp(format(day, "dd")))
+          expect(
+            screen.queryByText(RegExp(format(day, "dd")))
+          ).toBeInTheDocument()
         );
       });
 
-      it("the first day should Thursday", () => {
+      it("first day should thursday", () => {
         render(
-          <MonthCalendar focus={new Date(0)}>
+          <MonthCalendar.Grid focus={new Date(0)}>
             <MonthCalendar.GridCell />
-          </MonthCalendar>
+          </MonthCalendar.Grid>
         );
 
         expect(screen.getAllByRole(/(grid)?cell/).at(4))
@@ -357,22 +348,22 @@ describe("<MonthCalendar />", () => {
           .toHaveTextContent("01");
       });
 
-      it("If focus on January 1970 first, then change focus to February 1970", () => {
+      it("change focus to february 1970, first day should be sunday", () => {
         const first = new Date(0);
         const { rerender } = render(
-          <MonthCalendar focus={first}>
+          <MonthCalendar.Grid focus={first}>
             <MonthCalendar.GridCell />
-          </MonthCalendar>
+          </MonthCalendar.Grid>
         );
         expect(screen.getAllByRole(/(grid)?cell/).at(4))
           //
           .toHaveTextContent("01");
 
-        const second = add(new Date(0), { months: 1 });
+        const second = add(first, { months: 1 });
         rerender(
-          <MonthCalendar focus={second}>
+          <MonthCalendar.Grid focus={second}>
             <MonthCalendar.GridCell />
-          </MonthCalendar>
+          </MonthCalendar.Grid>
         );
         expect(screen.getAllByRole(/(grid)?cell/).at(0))
           //
@@ -380,52 +371,33 @@ describe("<MonthCalendar />", () => {
       });
     });
 
-    describe("Makes the cell focusable, and implement Roving tabindex", () => {
-      //
-      describe("When the component container is loaded or created", () => {
-        it("If focus is January 1970, should be focus on January 1970", () => {
-          render(
-            <MonthCalendar focus={new Date(0)}>
-              <MonthCalendar.GridCell />
-            </MonthCalendar>
-          );
+    describe("makes the cell focusable, and implement roving tabindex", () => {
+      it(`set tabindex="0" on the element that will initially be included in the tab sequence`, () => {
+        render(
+          <MonthCalendar.Grid focus={new Date(0)}>
+            <MonthCalendar.GridCell />
+          </MonthCalendar.Grid>
+        );
 
-          expect(document.activeElement)
-            //
-            .toHaveTextContent("01");
-        });
+        expect(
+          screen
+            .queryAllByRole(/(grid)?cell/)
+            .filter((element) => element.getAttribute("tabindex") === "0")
+        ).toHaveLength(1);
+      });
 
-        it("Default focus on today", () => {
-          render(
-            <MonthCalendar>
-              <MonthCalendar.GridCell />
-            </MonthCalendar>
-          );
+      it(`set tabindex="-1" on all other focusable elements it contains`, () => {
+        render(
+          <MonthCalendar.Grid focus={new Date(0)}>
+            <MonthCalendar.GridCell />
+          </MonthCalendar.Grid>
+        );
 
-          expect(document.activeElement)
-            //
-            .toHaveTextContent(RegExp(format(new Date(), "dd")));
-        });
-
-        it(`Set tabindex="0" on the element that will initially be included in the tab sequence`, () => {
-          render(
-            <MonthCalendar>
-              <MonthCalendar.GridCell />
-            </MonthCalendar>
-          );
-
-          expect(document.activeElement)
-            //
-            .toHaveAttribute("tabindex", "0");
-        });
-
-        it(`Set tabindex="-1" on all other focusable elements it contains.`, () => {
-          Array.from(
-            render(<MonthCalendar />).container.querySelectorAll(`[tabindex]`)
-          )
-            .filter((el) => el !== document.activeElement)
-            .forEach((el) => expect(el).toHaveAttribute("tabindex", "-1"));
-        });
+        expect(
+          screen
+            .queryAllByRole(/(grid)?cell/)
+            .filter((element) => element.getAttribute("tabindex") === "-1")
+        ).toHaveLength(34);
       });
     });
   });
@@ -441,16 +413,12 @@ interface State {
   focus: Date;
   table: (Date | undefined)[][];
 }
-
 const Context = createContext<State | null>(null);
-
 function useMonthCalendarContext(error: string) {
   const context = useContext(Context);
-
   if (!context) {
     throw new Error(error);
   }
-
   return context;
 }
 
@@ -487,33 +455,31 @@ function GridCell(props: GridCellProps) {
     `<GridCell /> cannot be rendered outside <MonthCalendar />`
   );
 
-  const { table, focus: focusOn } = context;
+  const { table, focus } = context;
 
   return (
     <>
       {table.map((row, index) => (
         <tr key={index}>
           {row.map((day, index) => {
-            const element = day && props.children?.(day);
+            if (!day) {
+              return <td key={index} tabIndex={-1} />;
+            }
 
-            // if child is valid react element, pass focus to the child
-            if (isValidElement<{}>(element)) {
+            const element = props.children?.(day);
+            const tabIndex = isSameDay(day, focus) ? 0 : -1;
+
+            if (isValidElement(element)) {
               return (
                 <td key={index}>
-                  {cloneElement(element, {
-                    ...element.props,
-                    ...focus(Boolean(day && isSameDay(day, focusOn))),
-                  })}
+                  {cloneElement(element, { ...element.props, tabIndex })}
                 </td>
               );
             }
 
             return (
-              <td
-                key={index}
-                {...focus(Boolean(day && isSameDay(day, focusOn)))}
-              >
-                {element || (day && format(day, "dd"))}
+              <td key={index} tabIndex={tabIndex}>
+                {format(day, "dd")}
               </td>
             );
           })}
@@ -523,11 +489,11 @@ function GridCell(props: GridCellProps) {
   );
 }
 
-type MonthCalendarProps = {
+type GridProps = {
   focus?: Date;
   children?: ReactNode;
 };
-export const MonthCalendar = (props: MonthCalendarProps) => {
+export const Grid = (props: GridProps) => {
   let columnheader: ReturnType<typeof ColumnHeader> | null = null;
   let gridcell: ReturnType<typeof GridCell> | null = null;
 
@@ -556,8 +522,8 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
   return (
     <Context.Provider value={{ focus, table }}>
       <table role="grid">
-        <thead>
-          <tr>{columnheader}</tr>
+        <thead role="rowgroup">
+          <tr role="row">{columnheader}</tr>
         </thead>
         <tbody>{gridcell}</tbody>
       </table>
@@ -565,8 +531,11 @@ export const MonthCalendar = (props: MonthCalendarProps) => {
   );
 };
 
-MonthCalendar.ColumnHeader = ColumnHeader;
-MonthCalendar.GridCell = GridCell;
+export const MonthCalendar = {
+  Grid,
+  ColumnHeader,
+  GridCell,
+};
 ```
 
 這裡用了一點小技巧將 `props.children` 裡面的 `element` 過濾，  

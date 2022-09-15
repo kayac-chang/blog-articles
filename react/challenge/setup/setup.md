@@ -10,6 +10,11 @@
 
 建立 [Turbo][turborepo] 建立 Monorepo
 
+> Monorepo 簡單來說，  
+> 是指將多個專案放置在同一個專案下集中管理。
+> 這樣的好處是在開發階段時，  
+> 可以保持開發的彈性，同時也保持解耦。
+
 > ### Turborepo
 >
 > **Turborepo** 是 [vercel][vercel] 團隊內部在用的 monorepo 建置工具。  
@@ -293,6 +298,11 @@ export default function Web() {
 至於要不要採用 TDD 看個人，  
 我個人採用的原因是，  
 因為整體開發時間會比較減少 (aka 除錯跟通靈時間成本降低)。
+
+> 註解：TDD
+> 開發團隊寫測試，通常有三種模式：
+> 先寫測試再開發、開發完成再寫測試、無招勝有招—不寫測試（誤）
+> TDD 是指第一種模式，先寫測試再開發，也就是常聽到的 TDD（Test-Driven Development）。
 
 1. 加入 [vitest]
 

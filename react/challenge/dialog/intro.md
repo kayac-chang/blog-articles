@@ -1,6 +1,6 @@
 # 如何製作對話視窗 dialog【 dialog | 我不會寫 React Component 】
 
-hashtags: `#react`, `#dialog`
+hashtags: `#react`, `#components`, `#accessibility`, `#dialog`
 
 ## About
 
@@ -22,14 +22,14 @@ hashtags: `#react`, `#dialog`
 
 ```tsx
 it("the element that serves as the dialog container has a role of dialog.", () => {
-  render(<Dialog data-testid="a" aria-label="a" />);
+  render(<Dialog data-testid="a" />);
   expect(screen.getByTestId("a")).toHaveAttribute("role", "dialog");
 });
 
 it("all elements required to operate the dialog are descendants of the element that has role dialog.", () => {
   render(
-    <Dialog data-testid="a" aria-label="a">
-      <Dialog data-testid="b" aria-label="b" />
+    <Dialog data-testid="a">
+      <Dialog data-testid="b" />
     </Dialog>
   );
   expect(screen.getByTestId("a")).toHaveAttribute("role", "dialog");
@@ -40,8 +40,6 @@ it("all elements required to operate the dialog are descendants of the element t
 ### Solution
 
 ```tsx
-import type { ComponentProps } from "react";
-
 type DialogProps = ComponentProps<"div">;
 export function Dialog(props: DialogProps) {
   return <div {...props} role="dialog" />;
@@ -69,8 +67,6 @@ it("the dialog container element has aria-modal set to true.", () => {
 ### Solution
 
 ```tsx
-import type { ComponentProps } from "react";
-
 type DialogProps = ComponentProps<"div">;
 export function Dialog(props: DialogProps) {
   return <div {...props} aria-modal="true" role="dialog" />;
@@ -162,25 +158,28 @@ export function Dialog(props: DialogProps) {
 ## Spec: Description
 
 ```tsx
-it("optionally, the aria-describedby property is set on the element with the dialog role \
-      to indicate which element or elements in the dialog contain content \
-      that describes the primary purpose or message of the dialog.", () => {
-  render(
-    <Dialog aria-label="title">
-      <Dialog.Description data-testid="desc">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolorum at
-        obcaecati, aliquid modi deserunt reprehenderit maiores nulla soluta
-        itaque veritatis perspiciatis praesentium repellendus animi beatae
-        expedita temporibus. Eaque, quae facilis?
-      </Dialog.Description>
-    </Dialog>
-  );
+it(
+  "optionally, the aria-describedby property is set on the element with the dialog role " +
+    "to indicate which element or elements in the dialog contain content " +
+    "that describes the primary purpose or message of the dialog.",
+  () => {
+    render(
+      <Dialog aria-label="title">
+        <Dialog.Description data-testid="desc">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolorum at
+          obcaecati, aliquid modi deserunt reprehenderit maiores nulla soluta
+          itaque veritatis perspiciatis praesentium repellendus animi beatae
+          expedita temporibus. Eaque, quae facilis?
+        </Dialog.Description>
+      </Dialog>
+    );
 
-  expect(screen.getByRole("dialog")).toHaveAttribute(
-    "aria-describedby",
-    screen.getByTestId("desc").id
-  );
-});
+    expect(screen.getByRole("dialog")).toHaveAttribute(
+      "aria-describedby",
+      screen.getByTestId("desc").id
+    );
+  }
+);
 ```
 
 ### Solution
@@ -220,8 +219,8 @@ export function Dialog(props: DialogProps) {
 
 ## Next Section
 
-先讓我們停在這裡，  
-因為下面要介紹 tabbable。
+為了接下來的規格，  
+我們需要暫緩元件的部分，先實作一個極為麻煩的程式邏輯，tabbable。
 
 ## 名詞對照
 
