@@ -1,6 +1,6 @@
 # 如何製作對話視窗 multi-step【 dialog | 我不會寫 React Component 】
 
-hashtags: `#react`, `#dialog`
+hashtags: `#react`, `#components`, `#accessibility`, `#dialog`
 
 本篇接續前篇 [如何製作對話視窗 interaction【 dialog | 我不會寫 React Component 】](./dialog/interaction.md)  
 可以先看完上一篇在接續此篇。
@@ -13,9 +13,6 @@ hashtags: `#react`, `#dialog`
 這邊先簡單實作了一個 stack 用於 對話窗堆疊 效果。
 
 ```tsx
-import { Dialog } from "dialog";
-import { useRef, useState } from "react";
-
 type DialogID = "add-delivery-address" | "verification-result";
 
 export default function Web() {

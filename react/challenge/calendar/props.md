@@ -126,7 +126,7 @@ function GridCell(props: GridCellProps) {
     `<GridCell /> cannot be rendered outside <MonthCalendar />`
   );
 
-  const { table, focus: focusOn } = context;
+  const { table, focus } = context;
 
   return (
     <>

@@ -35,6 +35,10 @@ Grid 是一個容器組件，內部包含許多資訊跟交互元素。
 
 [grid] pattern 可以被歸類成兩種類別，
 
+## 關聯閱讀
+
+[Grids Part 1: To grid or not to grid](https://sarahmhigley.com/writing/grids-part1/)
+
 ## 名詞對照
 
 | 中文     | 英文                   |

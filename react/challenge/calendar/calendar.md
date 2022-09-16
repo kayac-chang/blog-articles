@@ -164,7 +164,7 @@ export function Calendar(props: CalendarProps) {
         </button>
       </header>
 
-      <MonthCalendar focus={current} key={current.valueOf()} />
+      <MonthCalendar.Grid focus={current} key={current.valueOf()} />
     </div>
   );
 }

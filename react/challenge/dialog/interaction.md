@@ -1,6 +1,6 @@
 # 如何製作對話視窗 interaction【 dialog | 我不會寫 React Component 】
 
-hashtags: `#react`, `#dialog`
+hashtags: `#react`, `#components`, `#accessibility`, `#dialog`
 
 本篇接續前篇 [如何製作對話視窗 tabbable【 dialog | 我不會寫 React Component 】](./tabbable.md)  
 可以先看完上一篇在接續此篇。
@@ -42,7 +42,7 @@ const setup = () => {
 };
 
 describe("dialog open", () => {
-  it("When a dialog opens, focus moves to an element contained in the dialog", () => {
+  it("when a dialog opens, focus moves to an element contained in the dialog", () => {
     setup();
     const [checkbox] = screen.getAllByTestId("element");
     expect(checkbox).toHaveFocus();
@@ -124,15 +124,18 @@ describe("tab", () => {
     expect(checkbox).toHaveFocus();
   });
 
-  it("if focus is on the last tabbable element inside the dialog, \
-        moves focus to the first tabbable element inside the dialog.", async () => {
-    setup();
-    const [checkbox, _, number] = screen.getAllByTestId("element");
-    number.focus();
-    expect(number).toHaveFocus();
-    await user.keyboard("{Tab}");
-    expect(checkbox).toHaveFocus();
-  });
+  it(
+    "if focus is on the last tabbable element inside the dialog, " +
+      "moves focus to the first tabbable element inside the dialog.",
+    async () => {
+      setup();
+      const [checkbox, _, number] = screen.getAllByTestId("element");
+      number.focus();
+      expect(number).toHaveFocus();
+      await user.keyboard("{Tab}");
+      expect(checkbox).toHaveFocus();
+    }
+  );
 });
 ```
 
@@ -192,15 +195,18 @@ describe("shift + tab", () => {
     expect(checkbox).toHaveFocus();
   });
 
-  it("if focus is on the first tabbable element inside the dialog, \
-        moves focus to the last tabbable element inside the dialog.", async () => {
-    setup();
-    const [checkbox, _, number] = screen.getAllByTestId("element");
-    checkbox.focus();
-    expect(checkbox).toHaveFocus();
-    await user.keyboard("{Shift>}{Tab}{/Shift}");
-    expect(number).toHaveFocus();
-  });
+  it(
+    "if focus is on the first tabbable element inside the dialog, " +
+      "moves focus to the last tabbable element inside the dialog.",
+    async () => {
+      setup();
+      const [checkbox, _, number] = screen.getAllByTestId("element");
+      checkbox.focus();
+      expect(checkbox).toHaveFocus();
+      await user.keyboard("{Shift>}{Tab}{/Shift}");
+      expect(number).toHaveFocus();
+    }
+  );
 });
 ```
 
@@ -247,6 +253,37 @@ useEffect(() => {
 ## Spec: Close
 
 用戶按下 <kbd>Esc</kbd> 時，要關閉對話視窗。
+
+```tsx
+describe("escape", () => {
+  const Comp = () => {
+    const [open, setOpen] = useState(true);
+
+    if (!open) return null;
+
+    return (
+      <Dialog
+        data-testid="dialog"
+        aria-label="title"
+        onDismiss={() => setOpen(false)}
+      >
+        <input data-testid="element" type="checkbox" />
+        <input data-testid="element" type="radio" />
+        <input data-testid="element" type="number" />
+      </Dialog>
+    );
+  };
+
+  it("closes the dialog.", async () => {
+    user.setup();
+    render(<Comp />);
+    const dialog = screen.getByTestId("dialog");
+    expect(dialog).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(dialog).not.toBeInTheDocument();
+  });
+});
+```
 
 ### Solution
 

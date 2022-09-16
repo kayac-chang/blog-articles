@@ -1,6 +1,6 @@
-# 如何製作日期選擇 Date Picker【 我不會寫 React Component 】
+# 如何製作日期選擇 Date Picker 1【 我不會寫 React Component 】
 
-hashtags: `#react`, `#datepicker`
+hashtags: `#react`, `#components`, `#accessibility`, `#datepicker`
 
 ## 關於 Date Picker Dialog
 
@@ -212,27 +212,32 @@ function useDatePickerContext(error: string) {
 這邊設計了 `forwardRef`，因為我們在 `MonthCalendar` 用到 `ref` 來 `focus`。
 
 ```tsx
-type ButtonProps = Omit<ComponentProps<"button">, "children"> & {
-  children?: ReactNode | ((state: State) => ReactNode);
-  action: Action;
-};
-const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+export type ButtonProps = PCP<
+  "button",
+  {
+    children?: ReactNode | ((state: State) => ReactNode);
+    action: Action;
+  }
+>;
+const Button = forwardRef<HTMLButtonElement, ButtonProps>((_props, ref) => {
   const [state, dispatch] = useDatePickerContext(
     `<DatePicker.Button /> cannot be rendered outside <DatePicker />`
   );
 
-  const onClick = () => dispatch(props.action);
+  const { action, children, ...props } = _props;
 
-  let children: ReactNode | null = null;
-  if (typeof props.children === "function") {
-    children ??= props.children(state);
+  const onClick = () => dispatch(action);
+
+  let element: ReactNode | null = null;
+  if (typeof children === "function") {
+    element ??= children(state);
   } else {
-    children ??= props.children;
+    element ??= children;
   }
 
   return (
-    <button type="button" onClick={onClick} ref={ref}>
-      {children}
+    <button {...props} type="button" onClick={onClick} ref={ref}>
+      {element}
     </button>
   );
 });
@@ -244,7 +249,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
 type DescriptionProps = ComponentProps<"span">;
 function Description(props: DescriptionProps) {
   const [{ input_describe }] = useDatePickerContext(
-    `<DatePicker.Field /> cannot be rendered outside <DatePicker />`
+    `<DatePicker.Description /> cannot be rendered outside <DatePicker />`
   );
 
   return <span id={input_describe} {...props} />;
@@ -261,13 +266,15 @@ function Field(props: FieldProps) {
 ```
 
 ```tsx
-type DatePickerProps = Omit<ComponentProps<"div">, "children"> & {
-  value?: Date;
-  children: (ReactNode | ((state: State) => ReactNode))[];
-};
+type DatePickerProps = PCP<
+  "div",
+  {
+    value?: Date;
+    children: (ReactNode | ((state: State) => ReactNode))[];
+  }
+>;
 export function DatePicker(props: DatePickerProps) {
   const id = useId();
-
   const context = useReducer(reducer, {
     input_describe: id + "input_describe",
     open: false,
@@ -289,69 +296,6 @@ export function DatePicker(props: DatePickerProps) {
   );
 }
 ```
-
-## Spec: Dialog
-
-開啟 對話視窗時，  
-必須提供快捷鍵控制改變日曆月份跟年份的按鈕。
-
-```tsx
-beforeEach(async () => {
-  await user.click(screen.getByRole("button", { name: /choose date/ }));
-});
-
-it("identifies the element as a dialog", () => {
-  expect(screen.queryByRole("dialog")).toBeInTheDocument();
-});
-
-it("indicates the dialog is modal", () => {
-  expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
-});
-
-it("defines the accessible name for the dialog", () => {
-  expect(screen.getByRole("dialog")).toHaveAccessibleName();
-});
-
-it("when the month and/or year changes the content of the h2 element is updated", async () => {
-  const h2 = screen.queryByRole("heading", { level: 2 });
-  expect(h2).toHaveTextContent("January 1970");
-
-  await user.click(screen.getByRole("button", { name: "next month" }));
-  expect(h2).toHaveTextContent("February 1970");
-
-  await user.click(screen.getByRole("button", { name: "next year" }));
-  expect(h2).toHaveTextContent("February 1971");
-
-  await user.click(screen.getByRole("button", { name: "last year" }));
-  expect(h2).toHaveTextContent("February 1970");
-
-  await user.click(screen.getByRole("button", { name: "last month" }));
-  expect(h2).toHaveTextContent("January 1970");
-});
-```
-
-### Solution
-
-## Spec
-
-日曆用來顯示年月的標頭必須標註 live region，  
-讓螢幕報讀用戶在用鍵盤或按鈕控制更改年月時，可以得到反饋。
-
-## Spec
-
-鍵盤提示必須顯示在對話視窗下方。  
-並標註 live region 用於提醒螢幕報讀用戶焦點已經轉移至日曆的方格。
-
-## Spec
-
-為了提供良好的視覺設計，被標注在欄位標頭的星期通常會被縮寫成兩個字。  
-但是這樣會讓螢幕報讀用戶難以理解這個星期的名稱。  
-所以透過標注完整的名稱在 `abbr` 屬性內，讓輔助科技用戶可以理解完整的名稱。
-
-## Spec
-
-當按鈕或是日期格接收到 focus 跟 hover 時，必須提供高對比度的邊框樣式，  
-用於指出裝置目前正在對焦的目標。
 
 ## 名詞對照
 

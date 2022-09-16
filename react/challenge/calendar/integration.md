@@ -114,9 +114,9 @@ describe("Integration: Calendar with MonthCalendar", () => {
 
 ## Spec: Roving tabindex Navigation
 
-當焦點目前落在元件上時，  
-可以用 箭頭上下左右 跟 Home, End 下去移動焦點，  
-且 `tabindex="0"` 會跟著當前焦點移動。
+當焦點目前落在元件上時，
+可以用 \*鍵盤上的按鍵， 箭頭上下左右 跟 Home, End 下去移動焦點，
+且 tabindex="0" 會跟著當前焦點移動。
 
 當按 <kbd>Arrow Up</kbd> 的時候，焦點要往上一格。
 當按 <kbd>Arrow Down</kbd> 的時候，焦點要往下一格。
