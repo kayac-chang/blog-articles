@@ -72,6 +72,15 @@ type DialogProps = ComponentProps<"div"> & {
 export function Dialog(_props: DialogProps) {
   const { children, initialFocusRef, ...props } = _props;
 
+  let backdrop: ReactNode | undefined = undefined;
+  Children.forEach(children, (element) => {
+    if (!isValidElement(element)) return;
+
+    if (element.type === Backdrop) {
+      backdrop = element;
+    }
+  });
+
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current;
@@ -99,7 +108,15 @@ export function Dialog(_props: DialogProps) {
         aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
         aria-describedby={context.describedby}
         ref={ref}
-      />
+      >
+        {Children.map(children, (element) => {
+          if (isValidElement(element) && element.type === Backdrop) {
+            return;
+          }
+
+          return element;
+        })}
+      </div>
     </Context.Provider>
   );
 }
@@ -252,48 +269,86 @@ useEffect(() => {
 
 ## Spec: Close
 
-用戶按下 <kbd>Esc</kbd> 時，要關閉對話視窗。
+用戶按下 <kbd>Esc</kbd> 時，要關閉對話視窗。  
+並且焦點要回到之前對焦的元素。
 
 ```tsx
 describe("escape", () => {
   const Comp = () => {
-    const [open, setOpen] = useState(true);
-
-    if (!open) return null;
+    const ref = useRef(null);
+    const [open, setOpen] = useState(false);
 
     return (
-      <Dialog
-        data-testid="dialog"
-        aria-label="title"
-        onDismiss={() => setOpen(false)}
-      >
-        <input data-testid="element" type="checkbox" />
-        <input data-testid="element" type="radio" />
-        <input data-testid="element" type="number" />
-      </Dialog>
+      <>
+        <button ref={ref} onClick={() => setOpen(true)}>
+          Open Dialog
+        </button>
+
+        {open && (
+          <Dialog
+            data-testid="dialog"
+            aria-label="title"
+            previousFocusRef={ref}
+            onDismiss={() => setOpen(false)}
+          >
+            <input data-testid="element" type="checkbox" />
+            <input data-testid="element" type="radio" />
+            <input data-testid="element" type="number" />
+          </Dialog>
+        )}
+      </>
     );
   };
 
   it("closes the dialog.", async () => {
     user.setup();
     render(<Comp />);
+
+    const button = screen.getByRole("button");
+    await user.click(button);
     const dialog = screen.getByTestId("dialog");
     expect(dialog).toBeInTheDocument();
+
     await user.keyboard("{Escape}");
     expect(dialog).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
   });
 });
 ```
 
 ### Solution
 
+除了按下 <kbd>Esc</kbd> 要關閉對話視窗之外，  
+點擊 `Backdrop` 也會需要關閉視窗。
+
+加入 `previousFocusRef`，讓我們在 `onDismiss` 被執行後可以對焦到該元素。
+
 ```tsx
 type DialogProps = ComponentProps<"div"> & {
   onDismiss?: () => void;
   initialFocusRef?: RefObject<HTMLElement>;
+  previousFocusRef?: RefObject<HTMLElement>;
 };
 export function Dialog(_props: DialogProps) {
   const { children, onDismiss, initialFocusRef, ...props } = _props;
+
+  const onClose = useCallback(() => {
+    onDismiss?.();
+    focus(previousFocusRef?.current);
+  }, [onDismiss, previousFocusRef?.current]);
+
+  let backdrop: ReactNode | undefined = undefined;
+  Children.forEach(children, (element) => {
+    if (!isValidElement(element)) return;
+
+    if (element.type === Backdrop) {
+      const onClick = () => {
+        element.props.onClick?.();
+        onClose();
+      };
+      backdrop = cloneElement(element, { ...element.props, onClick });
+    }
+  });
 
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -315,25 +370,23 @@ export function Dialog(_props: DialogProps) {
 
       if (shiftKey && key === "Tab") {
         event.preventDefault();
-
         const nextFocusIndex = (index - 1) % tabbables.length;
         return focus(tabbables.at(nextFocusIndex));
       }
       if (key === "Tab") {
         event.preventDefault();
-
         const nextFocusIndex = (index + 1) % tabbables.length;
         return focus(tabbables.at(nextFocusIndex));
       }
       if (key === "Escape") {
         event.preventDefault();
-        return onDismiss?.();
+        return onClose?.();
       }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => void window.removeEventListener("keydown", onKeyDown);
-  }, [ref.current, initialFocusRef?.current, lastFocus.current, onDismiss]);
+  }, [ref.current, initialFocusRef?.current, onClose]);
 
   const id = useId();
   const context = {
@@ -350,7 +403,15 @@ export function Dialog(_props: DialogProps) {
         aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
         aria-describedby={context.describedby}
         ref={ref}
-      />
+      >
+        {Children.map(children, (element) => {
+          if (isValidElement(element) && element.type === Backdrop) {
+            return;
+          }
+
+          return element;
+        })}
+      </div>
     </Context.Provider>
   );
 }

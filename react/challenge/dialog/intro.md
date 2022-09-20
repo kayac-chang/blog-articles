@@ -111,6 +111,9 @@ describe("the dialog has either:", () => {
 
 ### Solution
 
+這裡用到了 Compound Component Pattern，  
+如果不太了解可以到 [如何製作月曆 compound components【 calendar | 我不會寫 React Component 】](./calendar/compound-components.md) 看詳細說明。
+
 ```tsx
 type State = {
   labelledby: string;
@@ -156,6 +159,9 @@ export function Dialog(props: DialogProps) {
 ```
 
 ## Spec: Description
+
+如果對話視窗的內容能夠簡單概括的話，  
+可以用 `aria-describedby` 放便用戶了解內容。
 
 ```tsx
 it(
@@ -215,6 +221,101 @@ export function Dialog(props: DialogProps) {
     </Context.Provider>
   );
 }
+```
+
+## Spec: Visual styling obscures the content outside of it
+
+關於 [aria-modal][aria-modal] 還有一個要求為：**對外部進行視覺模糊效果**。
+
+這邊設計成用戶可以自行客製化 `Backdrop`，  
+如果沒有提供則會有預設的 `Backdrop`。
+
+### Solution
+
+這邊提供了預設，但用戶也可以根據自己需要客製化。
+
+```tsx
+type BackdropProps = ComponentProps<"div">;
+function Backdrop(props: BackdropProps) {
+  if (props.children) {
+    return <div {...props}>{props.children}</div>;
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backdropFilter: "brightness(30%)",
+      }}
+      {...props}
+    />
+  );
+}
+```
+
+利用之前的 `slot pattern` 擷取出 `Backdrop`。
+
+```tsx
+let backdrop: ReactNode | undefined = undefined;
+Children.forEach(children, (element) => {
+  if (!isValidElement(element)) return;
+
+  if (element.type === Backdrop) {
+    backdrop = element;
+  }
+});
+
+// ...
+
+return (
+  <Context.Provider value={context}>
+    {backdrop ?? <Backdrop onClick={onDismiss} />}
+    <div
+      {...props}
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby={props["aria-label"] ? undefined : context.labelledby}
+      aria-describedby={context.describedby}
+    >
+      {Children.map(children, (element) => {
+        if (isValidElement(element) && element.type === Backdrop) {
+          return;
+        }
+
+        return element;
+      })}
+    </div>
+  </Context.Provider>
+);
+
+// ...
+
+Dialog.Title = Title;
+Dialog.Description = Description;
+Dialog.Backdrop = Backdrop;
+```
+
+使用方式像下面這樣。
+
+```tsx
+function AddDeliveryAddress(props: ModalProps) {
+  return (
+    <Dialog
+      className={[
+        "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+        "bg-white shadow p-8",
+      ].join(" ")}
+    >
+      <Dialog.Backdrop>
+        <div className="fixed bg-red-200 inset-0" />
+      </Dialog.Backdrop>
+
+      <Dialog.Title className="text-blue-800 text-2xl text-center mb-4">
+        Add Delivery Address
+      </Dialog.Title>
+
+// ...
 ```
 
 ## Next Section

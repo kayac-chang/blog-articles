@@ -2,6 +2,9 @@
 
 hashtags: `#react`, `#components`, `#accessibility`, `#datepicker`
 
+本篇接續前篇 [如何製作日期選擇 Date Picker 1【 我不會寫 React Component 】](./datepicker-1.md)  
+可以先看完上一篇在接續此篇。
+
 ## Spec: Dialog / Modal
 
 點選選擇日期按鈕時，要開啟對話視窗。

@@ -3,13 +3,16 @@
 hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#control`
 
 本篇接續前篇 [如何製作月曆 date grid 【 calendar | 我不會寫 React Component 】](./month-calendar.md)  
-可以先看完上一篇在接續此篇。
+可以先看完上一篇再接續此篇。
 
 ## Spec: 基本架構
 
 雖然我們可以顯示當前月份的月曆，  
-但我希望可以不只能顯示當前月份而已。  
-為此我們需要一個建立兩個按鈕跟一個顯示當前年月的標籤。
+但我希望可以不只能顯示當前月份而已。
+為此我們需要
+
+- 一個建立兩個按鈕
+- 一個顯示當前年月的標籤
 
 ```tsx
 describe("calendar should render correctly", () => {

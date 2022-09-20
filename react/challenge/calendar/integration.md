@@ -125,6 +125,11 @@ describe("Integration: Calendar with MonthCalendar", () => {
 當按 <kbd>Home</kbd> 的時候，焦點要移動到該週第一天。
 當按 <kbd>End</kbd> 的時候，焦點要移動到該週最後一天。
 
+當按 <kbd>PageUp</kbd> 的時候，日曆要切換至前一個月份。
+當按 <kbd>Shift + PageUp</kbd> 的時候，日曆要切換至前一年。
+當按 <kbd>PageDown</kbd> 的時候，日曆要切換至下一個月份。
+當按 <kbd>Shift + PageDown</kbd> 的時候，日曆要切換至下一年。
+
 ```tsx
 describe("When the component contains focus and the user presses a navigation key", () => {
   it(`set tabindex="-1" on the element that has tabindex="0"`, async () => {
