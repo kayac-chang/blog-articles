@@ -3,7 +3,7 @@
 hashtags: `#react`, `#components`, `#accessibility`, `#dialog`, `#tabbable`
 
 本篇接續前篇 [如何製作對話視窗 dialog【 dialog | 我不會寫 React Component 】](./intro.md)  
-可以先看完上一篇在接續此篇。
+可以先看完上一篇再接續此篇。
 
 讓人很意外的是，  
 有蠻多工程師其實並不知道，實作對焦邏輯是一件很不容易的事。
@@ -15,7 +15,7 @@ hashtags: `#react`, `#components`, `#accessibility`, `#dialog`, `#tabbable`
 
 ## Spec: Tabbable
 
-以下情況被視為 `tabbable`:
+以下情況將被視為鍵盤可操作 `tabbable`:
 
 - `<button>`
 - `<input>`
@@ -33,13 +33,13 @@ hashtags: `#react`, `#components`, `#accessibility`, `#dialog`, `#tabbable`
 
 - 帶有負數的 `tabindex` 屬性
 - 帶有 `disabled` 屬性
-- 節點自身或是它的祖宗被 `display: none` 隱藏
+- 節點自身或是它的父層元件被 `display: none` 隱藏
 - 帶有 `visibility: hidden` 樣式
 - 被包進 `<details>` 元件裡面，除了第一個 `<summary>` 元件
 - `<input type="radio">`元件但是有其他 radio 已經被 `checked`
 - 雖然是表單欄位 (button, input, select, textarea) 但被放在 `disabled` 的 `<fieldset>` 底下
 
-如果你想了解更詳細的清單，可以參考[這個][focusable]。
+如果你想了解更詳細的清單，可以參考[這個網站 - Focusable Elements - Browser Compatibility Table][focusable]。
 
 然後在實作中，  
 如果你覺得節點應該要被包含進 tabbable 但卻沒有時，  
