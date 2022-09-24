@@ -3,7 +3,7 @@
 hashtags: `#react`, `#components`, `#accessibility`, `#calendar`, `#props`
 
 本篇接續前篇 [如何製作月曆 compound components【 calendar | 我不會寫 React Component 】](./compound-components.md)  
-可以先看完上一篇在接續此篇。
+可以先看完上一篇再接續此篇。
 
 ## Props with Typescript
 
@@ -67,7 +67,7 @@ function MyButton({ somethingElse, ...props }: MyButtonProps) {
 }
 ```
 
-我會透過這個方式來延展日曆元件的傳入職。
+我會透過這個方式來延展日曆元件的傳入值。
 
 ```tsx
 export type GridProps = ComponentProps<"table"> & {
