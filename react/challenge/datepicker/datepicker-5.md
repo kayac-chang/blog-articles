@@ -3,7 +3,7 @@
 hashtags: `#react`, `#components`, `#accessibility`, `#datepicker`
 
 本篇接續前篇 [如何製作日期選擇 Date Picker 4【 我不會寫 React Component 】](./datepicker-4.md)  
-可以先看完上一篇在接續此篇。
+可以先看完上一篇再接續此篇。
 
 ## Spec: Select Date
 

@@ -3,7 +3,7 @@
 hashtags: `#react`, `#components`, `#accessibility`, `#dialog`
 
 本篇接續前篇 [如何製作對話視窗 tabbable【 dialog | 我不會寫 React Component 】](./tabbable.md)  
-可以先看完上一篇在接續此篇。
+可以先看完上一篇再接續此篇。
 
 ## Spec: Init Focus
 
@@ -16,7 +16,7 @@ hashtags: `#react`, `#components`, `#accessibility`, `#dialog`
   建議將第一個靜態元素設定成 `tabindex="-1"` 並將焦點對焦在它身上。
   這會讓使用輔助科技的用戶可以順著內文想呈現的閱讀順序接收資訊。
 
-- 如果內文太長，對焦在第一個可交互元素會導致畫面滑動到下方時，  
+- 如果內文太長，導致對焦在第一個可交互元素時，會使畫面滑動到下方，  
   建議將對話視窗最上方的靜態元素設定成 `tabindex="-1"`，就是 `title` 或是 第一個 `paragraph`，並對焦在它身上。
 
 - 如果對話視窗要執行的步驟是不可逆的，像是 刪除資料 或是 確認訂單交易，  
