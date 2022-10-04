@@ -1,5 +1,8 @@
 # 如何製作手風琴 accordion 2【 我不會寫 React Component 】
 
+本篇接續前篇 [如何製作手風琴 accordion 1【 accordion | 我不會寫 React Component 】](./accordion-1.md)  
+可以先看完上一篇再接續此篇。
+
 ## Spec: allows only one panel expanded at once
 
 部分實作限制，同一時間只能有一個 `panel` 可以展開。
