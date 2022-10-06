@@ -15,3 +15,5 @@
 ## 純 JS / 框架 跟 FP / OOP 的關係是什麼？
 
 ## 工作技能要求？
+
+https://www.youtube.com/watch?v=Zbu7flpYnGc&ab_channel=RyanDavisDev

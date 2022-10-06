@@ -15,5 +15,13 @@
   - [ ] don't overuse headings
 
 - structured data
+
   - [ ] Design Rich Results
   - [ ] Check Rich Results using Google Rich Results test
+
+- url
+  - [ ] keep url length short 35 - 45 characters
+  - [ ] meaningful url
+  - [ ] make relevance of keywords present in the URL
+  - [ ] use hyphens instead of underscores
+  - [ ] eliminate excess words

@@ -158,3 +158,74 @@ You can use Google Search Console to find the sources of URLs causing "not found
 - Avoid providing only a vague message like "Not found", "404", or no 404 at all.
 
 - Avoid using a design for your 404 pages that isn't consistent with the rest of your site.
+
+## Simple URLs convey content information
+
+Creating descriptive categories and filenames for the documents on your websites
+not only helps you keep your site better organized,
+it can create easier, friendlier URLs for those that want to link to your content.
+Visitors may be intimidated by extremely long and cryptic URLs
+that contain few recognizable words.
+
+URLs like the following can be confusing and unfriendly:
+
+```
+https://www.brandonsbaseballcards.com/folder1/22447478/x2/14032015.html
+```
+
+If your URL is meaningful, it can be more useful and easily understandable in different contexts:
+
+```
+https://www.brandonsbaseballcards.com/article/ten-rarest-baseball-cards.html
+```
+
+## URLs are displayed in search results
+
+Lastly, remember that the URL to a document
+is usually displayed in some form in a Google Search result
+near the document title.
+
+Google is good at crawling all types of URL structures,
+even if they're quite complex,
+but spending the time to make your URLs as simple as possible is a good practice.
+
+## Use words in URLs
+
+URLs with words that are relevant to your site's content
+and structure are friendlier for visitors navigating your site.
+
+### Avoid
+
+- Avoid using lengthy URLs with unnecessary parameters and session IDs.
+- Avoid choosing generic page names like page1.html
+- Avoid using excessive keywords like baseball-cards-baseball-cards-baseballcards.html.
+
+## Create a simple directory structure
+
+Use a directory structure that organizes your content well
+and makes it easy for visitors to know
+where they're at on your site.
+
+Try using your directory structure to indicate the type of content found at that URL.
+
+### Avoid
+
+- Avoid having deep nesting of subdirectories like .../dir1/dir2/dir3/dir4/dir5/dir6/page.html
+- Avoid using directory names that have no relation to the content in them.
+
+## Provide one version of a URL to reach a document
+
+To prevent users from linking to one version of a URL
+and others linking to different version
+(this could split the reputation of that content between the URLs),
+focus on using and referring to one URL in the structure
+and internal linking of your pages.
+If you do find that people are accessing the same content through multiple URLs,
+setting up a 301 redirect from non-preferred URLs to the dominant URL
+is a good solution for this.
+If you cannot redirect, you may also use the rel="canonical" link element.
+
+### Avoid
+
+- Avoid having pages from subdomains and the root directory access the same content,
+  for example, domain.com/page.html and sub.domain.com/page.html
