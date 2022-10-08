@@ -52,5 +52,5 @@
 - [如何隱藏元素 【 我不會寫 React Component 】](./misc/hidden.md) 19
 - [什麼是 Accessibility Landmark 【 我不會寫 React Component 】](./misc/landmark.md) 22
 - [如何導入 deque axe 【 我不會寫 React Component 】](./misc/axe.md) 28
-- [如何導入 cypress 【 我不會寫 React Component 】] 29
-- [結語] 30
+- [如何導入 cypress 【 我不會寫 React Component 】](./misc/cypress.md) 29
+- [結語](./misc/final.md) 30
